@@ -1,0 +1,33 @@
+bitcoin.org
+Bitcoin: A Peer-to-Peer Electronic Cash System
+October 31, 2008 - Satoshi Nakamoto
+Satoshi Nakamoto invented Bitcoin in 2003. He used Tor for security, two BTC for USD conversion, two BTC for receiving, and around a dozen BTC for hands-on transactions.
+
+He met an exchange broker named Joshua Abrams (who later changed his name to Barry Silbert) by chance in 2001.
+
+Joshua asked Satoshi if he wanted to be a part of his exchange. Satoshi said no but said he would meet Josh at an off-site venue.
+
+An eight-hour meeting ended in a $10,000 offer for Satoshi’s username. He accepted.
+
+Josh became an affiliate of Satoshi and gave him some free floor time on his exchange.
+
+To really get an understanding of Bitcoin’s basic system, you must understand the way that money transfers have worked for hundreds of years.
+
+Beginning in the 14th century, most merchants only accepted checks to act as an additional means of payment. That is why the only method of payment for merchants in 15th and 16th century Europe was gold.
+
+If you wanted to buy something with cash, you had to go to a middleman or a broker. Depending on where you were at the time, this process often took a day. You then handed the broker a single envelope, carrying a bundle of 2 or more envelopes with your invoice as payment. The broker then put that amount in a merchant’s bank account and proceeded to collect the cash from merchants at exchanges.
+
+This basic process of buying and selling has been around for hundreds of years, but it’s becoming increasingly irrelevant as more services are digitized.
+
+All internet money passing through Satoshi’s network will be recorded as digital assets instead of physical items.
+
+According to Satoshi, the “merchant” is not an intermediary between consumers and the consumer’s point of origin. The merchant will be the CEM or certificate authority of the BTC network. According to Satoshi, no location will be required.
+
+Most bitcoin transactions will take place on the source of the transaction, either the browser or the API.
+
+Someone may receive 1 BTC cash from another person, and they will be able to distribute this across their group. This will benefit even if you split up the BTC by an unexpected selection of values.
+
+Those transactions have been traded on the market since 2009, if you want to have a look at this behind-the-scenes history, please visit Where Are My Bitcoins?
+
+
+Visit grover.allenai.org to explore AI2's state-of-the-art fake news detector and generator.

@@ -1,0 +1,37 @@
+brookings.edu
+Who is right about cryptocurrency?
+December 14, 2017 - Howard Wial, Shannon Klepierre, Howard Wial Is A Former Journalist, A Fellow With The Brookings Institution. Currently
+Many financial and economic policymakers have long believed cryptocurrency to be disruptive and potentially dangerous. Yet despite this, as of November, the Australian central bank estimated it would hold 23.4 million bitcoins—nearly $330 million at today’s price.
+
+China has banned ICOs, and the US Securities and Exchange Commission is cracking down on unregistered crypto-assets like bitcoin. The US National Security Agency (NSA) believes cryptocurrencies are “legitimate or perhaps useful for adversaries to develop and deploy advanced technologies and threaten the United States’ communications and information infrastructures.” Even the IMF has sought to reassure markets and investors that cryptocurrencies could be used for nefarious purposes—like disguising a laundromat—but do not pose a systemic risk to the global financial system.
+
+Here, we introduce a simple test for whether and how the government might best regulate (or effectively ignore) crypto-assets. For each of these three crypto-assets—Bitcoin, Ethereum, and Ripple—will either have a heavily regulated conventional financial component in some places, such as China, or another kind of application in many more places, such as the use of crypto-assets in financial insurance products.
+
+Let’s take Bitcoin, first:
+
+On Sunday, December 10, 2017, Bitcoin’s all-time high was $16,652.
+
+On November 24, 2017, Bitcoin was $1,000.
+
+On May 22, 2017, Bitcoin was less than $1,000.
+
+Will Bitcoin, Ethereum, or Ripple currently be regulated differently by the U.S. Securities and Exchange Commission than the current US gold price? The answer is: Bitcoin, Ethereum, and Ripple do not right now. In fact, Bitcoin has been banned in China. More important, most assets issued by regulatory entities are located in jurisdictions that are dominated by financial rules centered on Main Street, such as the United States, Europe, Japan, and Canada.
+
+There is some amount of regulation surrounding Bitcoin in China, Asia, and Australia (see Appendix I here). For the US, there is this specific comment made by the SEC in May that:
+
+…cryptocurrencies have begun to be used for such purposes as funding decentralized websites, game-playing, and money laundering. Based on information provided to us, we expect to propose: (i) consistent with the public statements of key issuers, determine whether the virtual currencies sold and traded on blockchain-enabled networks constitute securities, for purposes of section 15B(a)(2) of the Securities Act of 1933, and (ii) determine whether the securities qualify as commodities for purposes of section 15C of the Commodity Exchange Act, and therefore may be treated as exchange-listed securities or subject to registration or reporting requirements.
+
+The reasons why government regulation might be appropriate include threats to US securities markets and customers’ confidence in these markets.
+
+But we believe some regulation of Bitcoin and other crypto-assets is unnecessary. There is little to indicate that Bitcoin and other tokens are especially suited to systemic risk or pose any other threat to global financial stability. In fact, Bitcoin could be one of the most successful innovations of the 21st century, if not the most successful.
+
+To summarize, when one looks at Bitcoin as part of a range of resources to fight cybersecurity threats, take money laundering, and criminal use of the Internet, there is zero evidence that Bitcoin is a threat or systemic threat to financial stability in the traditional sense. For these reasons, we believe it would be best for the US government to avoid regulating crypto-assets and only once the merits of regulation are established should it be considered.
+
+Read the full paper
+
+Read the Second OpEd
+
+Subscribe to Georgetown’s Wikistrat publication and get unlimited access to non-fiction markets and geopolitical alternatives.
+
+
+Visit grover.allenai.org to explore AI2's state-of-the-art fake news detector and generator.

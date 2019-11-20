@@ -1,0 +1,3 @@
+Thanks for finding that.&nbsp; We switched from ANSI in 0.2 to UTF-8 in version 0.3, so it must be related to that.<br><br>Just to confirm, if you log in with the non-latin character username, not having an appdata/Bitcoin directory yet, and run Bitcoin and let it create the database from scratch, does it work or not?
+
+I tested this with a non-lower-ASCII account name on XP and confirmed the bug, then tested that the new GetDefaultDataDir fixed it. &nbsp;This change is revision 102 of the SVN.

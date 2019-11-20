@@ -1,0 +1,34 @@
+It’s funny, the cypherpunks want to demonstrate that code is law. In part, they think they can back me into a corner. They think that they can support their assertion by making me sign something publicly. As such, they have a whole plan about keys and how it suits their purpose. Little do they understand, law works differently.
+
+
+The important thing to understand is: law is law. Code (programs and algorithms) in any form is merely evidence. Bitcoin was designed to work within a common-law framework. I studied law to a point where I completed my master’s degree in international commercial law from Northumbria University, UK in 2008. At that point, I was still not a lawyer in any sense. I’m a member of the Society of Legal Scholars now, and I have taught law in the past. Subsequent to my Masters of Law (2012), I did training to be a barrister and training to be a solicitor, although I never completed the practical experience or worked as one. I’m now doing my doctor in law.
+
+You see, ownership of the key is not proof of anything other than the possession of a key. The call to have a precedent based or derived on or from a key signing is dangerous to say the least, and any competent judge would not base law on such basis. We are not talking about a registered digital signature, and even if, there is no such thing as non-repudiation. I have said so many many times before. It is a key aspect of law, no matter what someone claims: an individual always has the opportunity to repudiate. I won’t cover all the details of it here as it is really about evidence law and goes into far more detail than my post shall.
+
+And it is not how Bitcoin works. You don’t have a key that is associated with an identity in the format that something like PGP uses. Although some people have used foolish single-key systems in Bitcoin, it is against the design of the system. Bitcoin was developed in a manner that uses keys once and only once.
+
+It is incredibly ironic that people think Bitcoin is in any way about anonymity. I wouldn’t stop people trying to hide behind TOR, but such is not the purpose of Bitcoin. Bitcoin was birthed using a credit card payment. The records of the same payment are required to be kept by the banking system for 25 years. It hasn’t been that long. More importantly, I claimed the expenses on my tax in the 2008/2009 tax year. You see, a domain purchase in August 2008 is within the Australian tax year, but I was audited, which ended up going to court.
+
+
+I used AnonymousSpeech.com for many years, and held copies of the SecureAnonymousSurfing software. I started using it when I was investigating malware breaches and peer-to-peer copyright violations. It enabled me to track and analyse people breaching software licenses and media licenses and such people who were attacking my clients, that is, cyber criminals. I used the service as it stopped the cyber criminals from being able to find out who I really was.
+
+This is the source of Vistomail and the registration of the domain bitcoin.org.
+
+
+What you don’t realise yet is that I used my credit card. Yes, as crazy as it might seem to you, I used my credit card to purchase anonymous services. I even claimed it on my tax. I had an argument with the tax office in Australia about claiming it.
+
+It’s funny, people who discount law understand so little about it and the rules of evidence. Well, with a number of court cases about to start, you are going to find out some of the history of Bitcoin. I had a floating account balance on the AnonymousSpeech.com system. What people don’t realise is that the domain is registered on an anonymous site with links to registration in Switzerland, but when I did so, the domain could only be registered using a bank transfer or Visa card.
+
+The site now takes bitcoin, but it didn’t back then because Bitcoin hadn’t existed yet. Such is the ultimate irony to all of it: Bitcoin was never anonymous. It was paid for using a credit card. The domain used was paid for with an account that had money transferred from the credit card network with full KYC and all the logging requirements of the modern banking system.
+
+Don’t worry, the tax office has audited me so many times that none of it could ever be lost. And this one is mine. Unlike many of the other things that have occurred in the companies that I have created, it is something I did personally.
+
+When a bunch of cowards decided to dox me in December 2015, they should have checked their facts first. I moved to the UK in October 2015. The video I did where I talked about the Turing completeness of Bitcoin was conducted from Soho in London. There’s a reason why they arranged for a bunch of media shills to wait outside a house I was no longer living in, they didn’t do their homework and didn’t care. The plan was to stop me. To stop scaling Bitcoin and to try and take what Bitcoin is and break it and create a drug coin. Such is the entire purpose of Lightning. The Lightning Network is a system designed to allow criminals to purchase drugs and other illicit material and records being lost but still settling on Bitcoin in such a way that they can avoid anti-money laundering rules.
+
+Argue all you want about the nature of evidence, but there is one simple point I can categorically prove:
+
+The source of the funds that went to pay for the bitcoin.org domain registration on AnonymousSpeech.com derived from my credit card. More importantly, the same records remain current and valid.
+
+There is one sole purpose of all the copycat coins like Monero. It is the entire reason that BTC changed from being Bitcoin into some lab experiment designed to avoid law — one that is still failing.
+
+I told you to be careful in what you wanted and what you wished for, because you’re going to get it. I am the person behind the moniker Satoshi Nakamoto, and as a result of all the trolls and haters, I’m going to provide evidence. Not in a way that anonymous cowards would do. I’m going to use courts and law.

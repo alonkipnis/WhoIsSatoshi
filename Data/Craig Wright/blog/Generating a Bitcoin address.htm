@@ -1,0 +1,105 @@
+					<h1 class="entry-title">Generating a Bitcoin address</h1>
+										<div class="post-details">
+						<span>By Craig Wright</span> | <span>26 Apr 2016</span> | <span class="txt-color-brown">Bitcoin &amp; Blockchain Tech</span>
+					</div>
+					<hr width="100" class="sep">
+						<p><em>Although several good Bitcoin libraries are available, to ensure the compatibility and security of software using Bitcoin, it is important to understand how a Bitcoin address is generated. In this post, we show how to generate a Bitcoin address step by step, covering the various Bitcoin address formats as well.</em></p>
+<p>When writing software that uses Bitcoin, it is important to understand the process to ensure the security and compatibility of the transactions. In this post, we show the reader how a Bitcoin address is generated step by step. &nbsp;The input field within the generator page generates an example bitcoin private key and public address. &nbsp;Together, these enable secure bitcoin transactions.</p>
+<p><a href="https://web.archive.org/web/20160502204519/http://www.drcraigwright.net/Interactive/bitcoin-address-generator/" target="_blank" rel="nofollow noopener noreferrer"><img class="wp-image-16613 size-full aligncenter" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button.jpg" alt="generating-a-bitcoin-address_button" width="271" height="82"></a></p>
+<p>Several good Bitcoin libraries are available in several languages such as:</p>
+<p><a href="https://web.archive.org/web/20160502203810/https://github.com/MatthewLM/cbitcoin" target="_blank" rel="nofollow noopener noreferrer">C</a><br>
+<a href="https://web.archive.org/web/20160502203810/https://bitcoinj.github.io/" target="_blank" rel="nofollow noopener noreferrer">Java</a><br>
+<a href="https://web.archive.org/web/20160502203810/https://code.google.com/p/bitcoinsharp/" target="_blank" rel="nofollow noopener noreferrer">C#</a><br>
+<a href="https://web.archive.org/web/20160502203810/https://github.com/lian/bitcoin-ruby" target="_blank" rel="nofollow noopener noreferrer">Ruby</a><br>
+<a href="https://web.archive.org/web/20160502203810/https://github.com/laanwj/bitcoin-python" target="_blank" rel="nofollow noopener noreferrer">Python</a><br>
+<a href="https://web.archive.org/web/20160502203810/https://github.com/piotrnar/gocoin" target="_blank" rel="nofollow noopener noreferrer">Go</a><br>
+<a href="https://web.archive.org/web/20160502203810/https://github.com/bitcoinjs/bitcoinjs-lib" target="_blank" rel="nofollow noopener noreferrer">JavaScript</a></p>
+<p>Here, we use several of the JavaScript libraries that are publicly available.</p>
+<h4><strong>RANDOM NUMBERS</strong></h4>
+<p>Random number generation is important because it is the basis of most cryptography. When numbers are not suitably random, the amount of entropy is low, and it becomes simple to guess the private keys associated with your publicly known key. The most commonly function used on many systems is Math.random(), which generates predictable numbers that can be attacked. Many alternatives including hardware based-RNGs exist, but we will discuss good random number generation in detail a later article. Ultimately, the security of your Bitcoin address relies on ensuring that you have a secure random number generator.</p>
+<p>This post takes you through the creation of a Bitcoin address, assuming that a good random number has already been selected. One widely deployed method of creating a Bitcoin address relies on the use of matched word phrases. These are easier for people to remember, but also need to be difficult to guess. This is the approach used within the Bitcoin Address Generator.</p>
+<h4><strong>BITCOIN KEYS, ADDRESSES, AND FORMATS</strong></h4>
+<p>Bitcoin uses a public key cryptographic scheme based on&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.wikipedia.org/wiki/Elliptic_curve_cryptography" target="_blank" rel="noopener noreferrer">elliptic curve cryptography</a>. &nbsp;This scheme is more efficient than several other widely deployed public key systems such as RSA.</p>
+<p><a href="https://web.archive.org/web/20160502203810/http://www.secg.org/sec2-v2.pdf" target="_blank" rel="nofollow noopener noreferrer">Spec. 2.2.1</a>&nbsp;provides the generalized equation used in all elliptic curve cryptography:</p>
+<p><img class="alignnone size-full wp-image-16619" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button2.jpg" alt="generating-a-bitcoin-address_button2" width="228" height="46"></p>
+<p>Here, the elliptic curve domain is defined as a sextuple of the form:</p>
+<p><img class="alignnone size-full wp-image-16620" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button3.jpg" alt="" width="183" height="47"></p>
+<p>The particular curve deployed within Bitcoin is defined under the&nbsp;<a href="https://web.archive.org/web/20160502203810/http://www.secg.org/collateral/sec2_final.pdf" target="_blank" rel="nofollow noopener noreferrer">secp256k1</a>&nbsp;standard, which is based on the use of&nbsp;<a href="https://web.archive.org/web/20160502203810/http://en.wikipedia.org/wiki/Neal_Koblitz" target="_blank" rel="nofollow noopener noreferrer">Koblitz curves</a>. In these curves, our sextuple parameters are defined using the following values:</p>
+<p><img class="alignnone wp-image-16629" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button9.jpg" alt="" width="816" height="331" srcset="https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address_button9.jpg 954w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address_button9-300x122.jpg 300w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address_button9-768x312.jpg 768w" sizes="(max-width: 816px) 100vw, 816px"></p>
+<p>Inserting these values into the equation above gives us the final reduced form equation used in Bitcoin:</p>
+<p><img class="alignnone size-full wp-image-16622" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button5.jpg" alt="" width="200" height="57"></p>
+<p>In the section below, we take you through the creation of a Bitcoin private key and its associated public keys given a suitable random number.</p>
+<h4><strong>SECTION 1: GENERATE PRIVATE KEY</strong></h4>
+<p>The private key is the part of the key pair that needs to remain secret. This key is used to sign messages, including those that authorize the movement of bitcoins or, more accurately, the creation of a transaction that assigns entries in the blockchain ledger to another address.</p>
+<p><strong>STEP 1.1: ENTRY OF PASSPHRASE</strong></p>
+<p>In the generator application, there is a passphrase entry box.</p>
+<p><strong>STEP 1.2: HASH PASSPHRASE TO GENERATE PRIVATE KEY</strong></p>
+<p>A private key <em>d</em> is generated from the passphrase consisting of an integer that lies within the range [1,(<em>n</em>−1)], where <em>n</em> is 2​<sup>256</sup>​ , which is the largest number that can be returned by the <a href="https://web.archive.org/web/20160502203810/https://en.wikipedia.org/wiki/SHA-2" target="_blank" rel="nofollow noopener noreferrer">SHA256</a> hash function.</p>
+<p><strong>CODE FRAGMENT</strong></p>
+<p>The code to create a private key is as follows:</p>
+<div id="attachment_16623" style="width: 872px" class="wp-caption alignleft"><img aria-describedby="caption-attachment-16623" class="wp-image-16623 " src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address1-1024x309.jpg" alt="" width="862" height="260" srcset="https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address1.jpg 1024w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address1-300x91.jpg 300w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address1-768x232.jpg 768w" sizes="(max-width: 862px) 100vw, 862px"><p id="caption-attachment-16623" class="wp-caption-text"><em>Code fragment in javascript to generate a private key</em></p></div>
+<h4><strong>SECTION 2: ENCODE PRIVATE KEY</strong></h4>
+<p>The elliptic curve key pair that we create takes the form of (<em>d, Q</em>) where <em>Q</em> represents the public key that we create later.</p>
+<p>Private keys have been standardized to use a format defined under the&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/Wallet_import_format" target="_blank" rel="nofollow noopener noreferrer">Wallet Import Format (WIF)</a>.</p>
+<p><strong>STEP 2.1: PREPEND VERSION NUMBER</strong></p>
+<p>The first part of this format is to take the number we created in step 1.2&nbsp;and add a version number. &nbsp;This is done by adding a&nbsp;byte of hex value 0x80 to the start of the WIF format private key.</p>
+<p>A list of the&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/List_of_address_prefixes" target="_blank" rel="nofollow noopener noreferrer">address prefixes</a>&nbsp;is available from the Bitcoin wiki.</p>
+<p><strong>STEP 2.2: APPEND THE COMPRESSION FLAG</strong></p>
+<p>In the WIF, a compression flag is also appended to the private key. The least significant bit of a byte added to the end of the key functions as the compressed private key flag and takes the following values:</p>
+<p>0x00 uncompressed<br>
+0x01 compressed</p>
+<p>Some of the details for this specification are defined<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/User:Casascius/Base58Check-encoded_objects_proposal" target="_blank" rel="nofollow noopener noreferrer">&nbsp;here</a>.</p>
+<p>When Bitcoin was first created, compressed keys were not used. This resulted in a larger public key (65 bytes rather than the compressed 33 byte format). There are no compatibility or security issues resulting from using compressed keys. The fact that keys could be compressed was simply missed because of the poor documentation on OpenSSL at the time. Some minor additional computation is required, but this is minimal.</p>
+<p>The original format used to represent private keys was a Base58 form (detailed later) that would typically begin with the value ”5.” In the Bitcoin Address Generator&nbsp;as the private key is incorporated into the compressed encoding of the public key, it is changed to incorporate an extra 0x01 byte at the end. This results in a Base58 form that starts with a “K” or “L.”</p>
+<p><em>Later versions of this page will update the code to allow for this change and to represent the keys on the page in both formats.</em></p>
+<p><strong>STEP 2.3: CALCULATE AND APPEND CHECKSUM</strong></p>
+<p>Finally, a checksum is appended to the end of the string. This is calculated using the first four bytes of a double SHA256 hash process that takes the private key of whatever is being validated by the checksum.</p>
+<p><strong>CODE FRAGMENT</strong></p>
+<p>The code to encode a private key is as follows:</p>
+<div id="attachment_16624" style="width: 859px" class="wp-caption alignleft"><img aria-describedby="caption-attachment-16624" class="wp-image-16624 " src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address2-1024x340.jpg" alt="" width="849" height="282" srcset="https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address2.jpg 1024w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address2-300x100.jpg 300w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address2-768x255.jpg 768w" sizes="(max-width: 849px) 100vw, 849px"><p id="caption-attachment-16624" class="wp-caption-text"><em>Javascript code fragment to encode a private key</em></p></div>
+<p><strong>STEP 2.4: BASE58 ENCODE</strong></p>
+<p>Lastly, an encoding scheme known as&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.wikipedia.org/wiki/Base58" target="_blank" rel="nofollow noopener noreferrer">Base58</a>&nbsp;is used to convert the data from binary to text. This final form of a private key is easier to manage. In this format, the code is able to be used in a wide variety of applications.</p>
+<p>As a result of prepending the version number, the available range of private keys in the Base58 encoded format is limited to the following:</p>
+<p>Lowest possible value: KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73Nd2Mcv1<br>
+Highest possible value: L5oLkpV3aqBjhki6LmvChTCq73v9gyymzzMpBbhDLjDpKCuAXpsi</p>
+<p>The lower value is the one that you will notice in the form on this page when no values have been entered. On&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/User:Casascius/Base58Check-encoded_objects_proposal" target="_blank" rel="nofollow noopener noreferrer">the Base58 proposal</a>&nbsp;page in the Bitcoin wiki, we can see some other possible ranges for alternative private key formats.</p>
+<h4><strong>SECTION 3: PLOT THE PRIVATE KEY</strong></h4>
+<p>The elliptic curve public key is generated using our private key generated in step 1.2. &nbsp;This key <em>Q</em> = (<em>x<sub>Q</sub>, y<sub>Q</sub></em>) forms the point <em>Q = dG</em>.</p>
+<p>In this equation:</p>
+<p><img class="alignnone size-full wp-image-16625" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button6.jpg" alt="" width="888" height="369" srcset="https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address_button6.jpg 888w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address_button6-300x125.jpg 300w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address_button6-768x319.jpg 768w" sizes="(max-width: 888px) 100vw, 888px"></p>
+<p><strong>STEP 3.1 / 3.2: GENERATING THE PUBLIC KEY FROM THE PRIVATE KEY</strong></p>
+<p>In order to obtain the public key, we need to multiply the private key by the elliptic curve point generator. The public key is formed from the x and y coordinates of a point on the elliptic curve, and is a 65-byte long value consisting of a leading 0x04 and x and y coordinates of 32 bytes each.</p>
+<p>The full public key is defined as <em>k<sub>​pub</sub></em>​​ and this is shown in step 3.1.</p>
+<p>From this value, we can obtain the x and y coordinates as demonstrated in step 3.2.</p>
+<p><strong>CODE FRAGMENT</strong></p>
+<p>The code to generate the public key co-ordinates is as follows:</p>
+<div id="attachment_16626" style="width: 816px" class="wp-caption alignleft"><img aria-describedby="caption-attachment-16626" class="wp-image-16626 " src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address3.jpg" alt="" width="806" height="456" srcset="https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address3.jpg 1024w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address3-300x170.jpg 300w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address3-768x434.jpg 768w" sizes="(max-width: 806px) 100vw, 806px"><p id="caption-attachment-16626" class="wp-caption-text"><em>Javascript fragment to plot public key co-ordinates</em></p></div>
+<p><strong>SECTION 4: GENERATE PUBLIC KEY</strong></p>
+<p>The first versions of the Bitcoin client used the public key directly. Bitcoin&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/Address" target="_blank" rel="nofollow noopener noreferrer">addresses</a>&nbsp;are a simpler method to allow people to exchange bitcoins. A Bitcoin address consists of a&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/Base58Check_encoding" target="_blank" rel="nofollow noopener noreferrer">Base58</a>&nbsp;encoded string of a 25-byte binary address.&nbsp;An example of this is shown in final Base58 encoding in step 5.3.</p>
+<p>All standard addresses start with a “1.” Other formats are available, including multisig addressing, which is not covered in this post.</p>
+<p><strong>STEP 4.1: DETERMINE Y COORDINATE PARITY</strong></p>
+<p>We use the parity of our y coordinate to calculate a flag that is added to the front of our string.</p>
+<p><strong>STEP 4.2: APPEND PARITY INDICATOR BYTE</strong></p>
+<p>If the y coordinate or value is odd, we add 0x03. If it is even, we add 0x02 in front of the complete x coordinate. We use this string to represent the public key.</p>
+<p>An alternative string is created by taking the corresponding public key generated above as a string formed using:</p>
+<p>65 byte public key<br>
+0x04 (1 byte)<br>
+32 bytes corresponding to the x coordinate<br>
+32 bytes corresponding to y coordinate</p>
+<p><strong>STEP 4.3 / 4.4 HASH PUBLIC KEY</strong></p>
+<p>To create the address, we take the value created in Step 4.2 and hash the public key twice. Step 4.3 applies a SHA256 hash, and step 4.4 applies a RIPEMD160 hash over the result.</p>
+<p>This obfuscates the public key as well as making it simpler to use. There have been many attacks against hashing algorithms. Some, such as MD5 and SHA1, have been widely attacked and shown to be vulnerable to collision attacks. However, no hash has been shown to have an attack that aligns with the hash of another family of algorithms. As a result, it is infeasible for an attack to succeed against one family of hash algorithms used simultaneously with another family.</p>
+<p>The double hash shown below should be robust to&nbsp;<a href="https://web.archive.org/web/20160502203810/https://dankaminsky.com/2004/12/06/46/" target="_blank" rel="nofollow noopener noreferrer">length extension attacks</a>.</p>
+<h4><strong>SECTION 5: ENCODE THE PUBLIC KEY</strong></h4>
+<p><strong>STEP 5.1: PREPEND THE VERSION</strong></p>
+<p>The version is added to the front of the hash value. The public key version number that is added to the address calculation is not the same as the one used in the private key. Details are&nbsp;<a href="https://web.archive.org/web/20160502203810/https://en.bitcoin.it/wiki/Protocol_documentation#Addresses" target="_blank" rel="nofollow noopener noreferrer">available here</a>.</p>
+<p><strong>STEP 5.2: CALCULATE AND APPEND THE CHECKSUM</strong></p>
+<p>The checksum is calculated in the same manner as in step 2.3 and appended&nbsp;to the end of the hash value.</p>
+<p><strong>CODE FRAGMENT</strong></p>
+<p>The code to apply the double hash, prepend the version and calculate and append the checksum is as follows:</p>
+<div id="attachment_16627" style="width: 842px" class="wp-caption alignleft"><img aria-describedby="caption-attachment-16627" class="wp-image-16627 " src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address4.jpg" alt="" width="832" height="416" srcset="https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address4.jpg 1024w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address4-300x150.jpg 300w, https://craigwright.net/wp-content/uploads/2016/04/generating-a-bitcoin-address4-768x384.jpg 768w" sizes="(max-width: 832px) 100vw, 832px"><p id="caption-attachment-16627" class="wp-caption-text"><em>Code fragment in javascript to generate and encode a private key</em></p></div>
+<p><strong>STEP 5.3 BASE58 ENCODING</strong></p>
+<p>The hashed value with the prepended version and appended checksum is encoded using the Base58 process. This ensures that the final address is easy to read and copy.</p>
+<p><strong>CONCLUSION</strong></p>
+<p>In this post, we have stepped through the creation of a Bitcoin address with its associated public and private keys. You should now be able to see the differences between the address formats and how the values are calculated at each stage of the process. In later posts, we will cover the creation of secure random numbers and bitcoin transactions.</p>
+<p><a href="https://web.archive.org/web/20160502204519/http://www.drcraigwright.net/Interactive/bitcoin-address-generator/" target="_blank" rel="nofollow noopener noreferrer"><img class="alignnone size-full wp-image-16628" src="./Craig Wright - Generating a Bitcoin address_files/generating-a-bitcoin-address_button7.jpg" alt="" width="273" height="63"></a></p>

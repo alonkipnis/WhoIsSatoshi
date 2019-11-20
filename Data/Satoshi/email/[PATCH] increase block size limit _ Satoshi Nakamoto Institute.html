@@ -1,0 +1,3 @@
+ Don't use this patch, it'll make you incompatible with the network, to your own detriment.<br><br>We can phase in a change later if we get closer to needing it.
+
+ It can be phased in, like:<br><br>if (blocknumber &gt; 115000)<br>&nbsp;&nbsp; &nbsp;maxblocksize = largerlimit<br><br>It can start being in versions way ahead, so by the time it reaches that block number and goes into effect, the older versions that don't have it are already obsolete.<br><br>When we're near the cutoff block number, I can put an alert to old versions to make sure they know they have to upgrade.<br>
