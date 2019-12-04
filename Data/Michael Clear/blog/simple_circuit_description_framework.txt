@@ -1,0 +1,72 @@
+Simple Circuit Description Framework
+Wednesday 19th December 2018
+I have deprecated SCDL. It is much simpler and more terse to express arithmetic circuits in Python. Simple Circuit Description Framework (SCDF) is a simple Python framework to express, manipulate and evaluate arithmetic circuits with particular suitability for fully homomorphic encryption (FHE). It is available at https://github.com/ciphron/scdf. I intend to write/use Python bindings for the FHE library HElib to port my FHE Evaluator to Python and integrate it with this framework.
+
+Circuits are composed of two basic operations: addition (+) and multiplication (*). We will consider an example of a Boolean circuit. In the Boolean case, + corresponds to XOR and * corresponds to AND. In the following example, we will define and evaluate a circuit that checks the equality of two 8-bit integers.
+
+First let us define some constants.
+
+import scdf
+
+zero = scdf.Constant(0)
+one = scdf.Constant(1)
+Now we are ready to define the equaltiy checking circuit for two bits.
+
+def eq1(x, y):
+    return x + y + one
+Next we will define the equality checking circuit for two arbitrary length integers (of equal length). Each integer is given as a list of bits (more precisely, a wire that evaluates to a bit) ordered from least significant to most significant.
+
+def eq(xs, ys):
+    is_eq = one
+    for i in range(len(xs)):
+        is_eq *= eq1(xs[i], ys[i])
+    return is_eq
+The code so far can be found in the file base.py included with scdf.
+
+Now we have defined our desired circuit. The next step is to setup the inputs.
+
+NUM_BITS = 8 # we will use 8-bit integers
+x = vect_input('x', NUM_BITS)
+y = vect_input('y', NUM_BITS)
+We also have to setup the circuit to use the above inputs. Since, the depth of the circuit (eq) that we defined may not be optimal, we will also avail of the scdf.reduce_depth function.
+
+circ = scdf.reduce_depth(eq(x, y))
+To evaluate a circuit, we have to specify what type the values are, and the addition and multiplicaion operators must be overloaded by this type. For this purpose, we define a simple Bit class.
+
+class Bit(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __mul__(self, other):
+        return Bit((self.value * other.value) % 2)
+
+    def __add__(self, other):
+        return Bit((self.value + self.value) % 2)
+To evaluate the circuit, we need to setup an input map, which maps the names of inputs to their values. In our case, the values will be of type Bit. We have the following helper functions to aid in this task.
+
+    def to_bin(n, nbits):
+        nbin = [0] * nbits
+        i = 0
+        while i < nbits and n != 0:
+            nbin[i] = n & 1
+            n >>= 1
+            i += 1
+        return nbin
+
+    def add_num_to_map(name, num, input_map):
+        bin_rep = to_bin(num, NUM_BITS)
+        for i in range(NUM_BITS):
+            input_map['%s%d' % (name, i)] = Bit(bin_rep[i])
+Suppose the first integer, x, is set to 12 and the second integer, y, is set to 13. We write the following code:
+
+    input_map = {}
+    add_num_to_map('x', 12, input_map)
+    add_num_to_map('y', 13, input_map)
+Finally, we are ready to evaluate the circuit and print the result.
+
+    map_constant = lambda v: Bit(v)
+    result = scdf.eval_circuit(circ, input_map, map_constant)
+    print result.value
+Note the map_constant function maps constant values given as integers to instances of the appropriate type, in our case, Bit.
+
+The above code is a gentle illustartion of scdf. For a more complex circuit, see the Direct Sort sorting circuit in sort.py. Many FHE schemes support batching. They operate on vectors and support SIMD operations. We model this in scdf also by permitting left and right vector rotations. In sort.py, a SIMD variant of the Direct Sort algorithm is implemented and you can see how to use it in test_sort.py.

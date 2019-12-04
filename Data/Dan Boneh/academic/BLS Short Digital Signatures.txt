@@ -1,0 +1,53 @@
+BLS Short Digital Signatures
+Dan Boneh
+Department of Computer Science, Stanford University, Stanford, CA, USA
+Related Concepts
+◃Digital Signature Schemes; ◃Random Oracle Model
+Background
+It is well known that a ◃digital signature scheme (DSS) that produces signatures of length l can have security at most l. In other words, it is possible to forge a signa- ture on any message in time O(l) just given the public key. It is natural to ask whether we can construct signatures with such security, i.e., signatures of length l where the best algorithm for creating an ◃existential forgery (with con- stant success probability) under a chosen message attack takes time O(l). Concretely, is there a signature scheme producing -bit signatures where creating an existential forgery (with probability /) takes time approximately ?
+Theory
+◃DSS signatures and ◃Schnorr signatures provide secur- ity O(l ) with signatures that are l-bits long. These signa- tures can be shortened [] to about .l-bits without much affect on security. Hence, for concrete parameters, l = , shortened DSS signatures are -bits long.
+Boneh et al. [] describe a short signature scheme where -bit signatures provide approximately  secu- rity, in the ◃random oracle model. Hence, for l = , these signatures are approximately half the size of DSS signa- tures with comparable security. The system makes use of a ◃group G where () the computational ◃Diffie–Hellman problem is intractable, and () there is an efficiently com- putable, nondegenerate, bilinear map e : G × G → G
+    S-box 1
+      S-box 2
+        S-box 3 S-box 4
+      Blowfish.Fig. OneroundofBlowfish
+determining the S-boxes are filled with digits of π, XORed with bytes from a secret key which can consist of – bits. This preliminary cipher is then used to generate the actual S-boxes. Although Blowfish is one of the faster block ciphers for sufficiently long messages, the complicated initialization procedure results in a considerable efficiency degradation when the cipher is rekeyed too frequently. The need for a more flexible key schedule was one of the fac- tors that influenced the design of ◃Twofish, an Advanced Encryption Standard (◃Rijndael/AES) finalist which was inspired by Blowfish.
+Since the publication of Blowfish, only a few cryptan- alytical results have been published. A first analysis was made by Vaudenay [], who revealed classes of ◃weak keys for up to  rounds of the cipher. Rijmen [] proposed a second-order differential attack on a four-round vari- ant of Blowfish. In a paper introducing ◃slide attacks [], Biryukov and Wagner highlighted the importance of XOR- ing a different subkey in each round of Blowfish (Fig. ).
+Recommended Reading
+. Biryukov A, Wagner D () Slide attacks. In: Knudsen LR (ed) Proceedings of fast software encryption—FSE’. Lecture notes in computer science, vol , Springer, Berlin, pp –
+. Rijmen V () Cryptanalysis and design of iterated block ciphers. PhD thesis, Katholieke Universiteit, Leuven
+. Schneier B () Description of a new variable-length key, -bit block cipher (Blowfish). In: Anderson RJ (ed) Fast software encryption, FSE’. Lecture notes in computer science, vol , Springer, Berlin, pp –
+. Vaudenay S () On the weak keys of Blowfish. In: Gollmann D (ed) Fast software encryption, FSE’. Lecture notes in computer science, vol , Springer, Berlin, pp –
+ for some ◃group G. There are several examples of such groups from algebraic geometry where the bilinear map is implemented using the Weil pairing. Given such a group G of prime order q, the ◃digital signature scheme works as follows:
+Key Generation.
+. Pick an arbitrary ◃generator g ∈ G.
+. Pickarandomα∈{, ..., q}andsety=gα ∈G. . Let H be a ◃hash function H : {,}∗ → G.
+Output (g, y, H) as the public key and (g, α, H) as the private key
+Signing. To sign a message m ∈ {, }∗ using the private key (g, α, H) output H(m)α ∈ G as the signature.
+Verifying. To verify a message/signature pair (m, s) ∈ {,}∗ × G using the public key (g, y, H) test if e(g, s) = e(y, H(m)). If so, accept the signature. Otherwise, reject.
+For a valid message/signature pair (m, s) we have that s = H(m)α and therefore e(g, s) = e(g, H(m)α) = e(gα, H(m)) = e(y, H(m)). The second equality fol- lows from the bilinearity of e(,). Hence, a valid signature is always accepted. As mentioned above, the system is exis- tentially unforgeable under a chosen message attack in the ◃random oracle model, assuming the computational Diffie–Hellman assumption holds in G. Observe that a sig- nature is a single element in G whereas DSS signatures are pairs of elements. This explains the reduction in signature length compared to DSS.
+Recently, Boneh and Boyen [] and Zhang et al. [] describe a more efficient system producing signatures of the same length as Boneh, Lynn, and Shacham (BLS). However, security is based on a stronger assumption. Key generation is identical to the BLS system, except that the ◃hash function used is H : {,∗ }∗ → Zq.Asignatureonamessagem ∈ {, } iss = g/(α+H(m)) ∈ G. To verify a message/signature pair (m, s) test that e(ygH(m), s) = e(g, g). We see that signature length is the same as in BLS signatures. How- ever, since e(g, g) is fixed, signature verification requires only one computation of the bilinear map as opposed to two in BLS. Security of the system in the random oracle model is based on a nonstandard assumption called the t-Diffie–Hellman-inversion assumption. Loosely speak- ing, the assumption states that no efficient algorithm given g, gx, g(x), . . ., g(xt) as input can compute g/x. Here t is the number of chosen message queries that the attacker can make. Surprisingly, a variant of this system can be shown to be existentially unforgeable under a chosen message attack without the ◃random oracle model [].
+  
+Blum–Blum–Shub Pseudorandom Bit Generator
+Dan Boneh
+Department of Computer Science, Stanford University, Stanford, CA, USA
+Related Concepts
+◃Pseudorandom Number Generator
+Definition
+The Blum–Blum–Shub (BBS) pseudorandom bit genera- tor [] is one of the most efficient ◃pseudorandom num- ber generators known that is provably secure under the assumption that factoring large composites is intractable (◃integer factoring).
+Theory
+The generator makes use of ◃modular arithmetic and works as follows:
+Setup. Given a security parameter τ ∈ Z as input, gen- erate two random τ-bit primes p, q where p = q =  mod . Set N = pq ∈ Z. Integers N of this type (where both prime factors are distinct and are  mod ) are called ◃Blum integers. Next pick a random y in the ◃group Z∗N andsets = y ∈ Z∗N.Thesecretseedis(N, s).Aswe
+will see below, there is no need to keep the number N secret.
+Generate. Given an input l ∈ Z and a seed (N, s) we gener- ate a pseudorandom sequence of length l. First, set x = s. Then,fori=,...,l:
+. Viewxi asanintegerin[,N−]andletbi ∈{, }be the least significant bit of xi .
+. Setxt+ =xi ∈ZN.
+The output sequence is bb. . .bl ∈ {, }l.
+The generator can be viewed as a special case of
+the general Blum–Micali generator []. To see this, we show that the generator is based on a one-way per- mutation (◃one-way function and ◃substitutions and permutations) and a hard-core predicate of that permu- tation. For an integer N let QRN = (Z∗N) denote the subgroup of ◃quadratic residues in Z∗N and let FN : ZN → ZN denote the function FN (x) = x ∈ ZN . For Blum inte- gers the function FN is a permutation (a one-to-one map) of the subgroup of quadratic residues QRN . In fact, it is not difficult to show that FN is a one-way permutation of QRN , unless factoring Blum integers is easy. Now that we have a one-way permutation we need a hard-core bit of the permutation to construct a Blum–Micali-type gener- ator. Consider the predicate B : QRN → {, } that on input x ∈ QRN views x as an integer in [, N] and out- puts the least significant bit of x. Blum, Blum, and Shub showed that B(x) is a hard-core predicate of FN assum- ing it is hard to distinguish quadratic residues in ZN from nonresidues in ZN with ◃Jacobi symbol . Applying the Blum–Micali construction to the one-way permutation FN and the hard-core predicate B produces the generator above. The general theorem of Blum and Micali now shows that the generator is secure assuming it is hard to distin- guish quadratic residues in ZN from nonresidues in ZN with Jacobi symbol . Vazirani and Vazirani [] improved the result by showing that B(x) is a hard-core predicate under the weaker assumption that factoring random Blum integers is intractable.
+One can construct many different hard-core predicates fortheone-waypermutationFN definedabove.Everysuch ◃hard-core bit gives a slight variant of the BBS generator. For example, Hastad and Naslund [] show that for most ≤j<logNthepredicateBj(x): QRN →{, }that returns the jth bit of x is a hard-core predicate of FN assum- ing factoring Blum integers is intractable. Consequently, one can output bit j of xi at every iteration and still obtain a secure generator, assuming factoring Blum integers is intractable.
+One can improve the efficiency of the general Blum– Micali generator by outputting multiple simultaneously
+ 
+ secure hard-core bits per iteration. For the function FN it is known that the O(log log N) least significant bits are simultaneously secure, assuming factoring Blum inte- gers is intractable. Consequently, the simulator remains secure (asymptotically) if one outputs the O(log log N ) least significant bits of xi per iteration.
+Let I be the set of integers I = {,...,N}. We note that for a Blum integer N and a generator g ∈ Z∗N, Has- tad et al. [] considered the function GN,g : I → ZN defined by GN,g(x) = gx ∈ ZN. They showed that half the bits of x ∈ I are simultaneously secure for this function, assuming factoring Blum integers is intractable. Therefore, one can build a Blum–Micali generator from this func- tion that outputs (log N )/ bits per iteration. The result- ing pseudorandom generator is essentially as efficient as the BBS generator and is based on the same complexity assumption.

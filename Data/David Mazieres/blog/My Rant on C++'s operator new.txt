@@ -1,0 +1,803 @@
+My Rant on C++'s operator new
+by David Mazières
+
+Abstract
+These are some notes I have on C++'s operator new. Basically, I find its syntax downright hateful, and really wish the language had dealt more cleanly with allocation and construction. I wish one could pass around function pointers to constructors, give constructors knowledge of which memory allocators an object was allocated with, implement a robust debugging malloc, have safer per-class allocators, or per-class allocators that have access to constructor arguments. There do exist some slightly gross hacks for working around some of the problems. In the end, I show how to avoid using operator new at all. More general constructs in the language can achieve similar objectives with more flexibility. You may find the replacement allocator proposed here fairly disgusting. Just keep in mind that something far worse is built right into the language.
+Memory allocation in ANSI C
+It is worth reviewing memory allocation in ANSI C, because certain useful and obvious techniques in C are non-trivial or impossible to implement in C++. Memory allocation in C is relatively straight-forward (though C++ users would argue it is also error prone). Two functions allocate and free memory:
+void *malloc (size_t);
+void free (void *);
+Typical examples of usage are:
+void
+f (void)
+{
+  struct sss *s = malloc (sizeof (*s));
+  char *string2 = malloc (strlen (string1) + 1);
+
+  /* ... */
+
+  free (s);
+  free (string2);
+}
+Malloc takes the number of bytes to be allocated as a an argument, and returns the type void *. Because C will implicitly cast pointers of type void * to pointers of any other type, the result of malloc can be assigned to a pointer of any type without the need for an explicit cast.
+The simplicity of malloc's syntax offers many benefits. Though malloc is defined as part of the C language, it can be implemented as an ordinary library function requiring no special support from the compiler. Thus, anyone can define additional malloc-like functions. Many programs define a function called xmalloc that aborts execution if the system runs out of memory. People also write special purpose memory allocators, such as arenas, which are ordinary C functions returning type void *.
+
+Another great advantage of malloc's syntax is that malloc can be defined as a preprocessor macro. This technique is invaluable for tracking down memory allocation bugs such as memory leaks. Debugging malloc libraries like Gray Watson's dmalloc library can define malloc and free as follows:
+
+void *malloc (size_t);
+void *_malloc_leap (const char *file, int line, size_t size);
+#define malloc(size) _malloc_leap(__FILE__, __LINE__, size)
+
+void free (void *);
+void _free_leap (const char *file, int line, void *);
+#define free(ptr) _free_leap (__FILE__, __LINE__, ptr);
+(Note that an ANSI C preprocessor will replace the special symbols __FILE__ and __LINE__ with the file and line number of the macro's invocation.)
+With malloc defined in this way, the dmalloc library can record the source file and line number at which most pieces of memory are allocated. This doesn't work in every possible situation. The program may, for instance, assign malloc to a function pointer. In that case, the function malloc may get called rather than _malloc_leap. Nonetheless, the code still compiles and runs fine. (malloc as a function pointer has no arguments and consequently does not get expanded by the preprocessor). Any code can also call _malloc_leap directly. For instance, if a memory leak is tracked to the strdup function, strdup could be reimplemented as follows:
+
+static inline char *
+_strdup_leap (const char *file, int line, char *str)
+{
+  return strcpy (_malloc_leap (file, line, strlen (str) + 1), str);
+}
+#define strdup(str) _strdup_leap (__FILE__, __LINE__, str)
+Of course, there is one drawback to malloc's simplicity--it is not type safe. A small typo, such as
+
+  struct sss *s = malloc (sizeof (s));
+instead of
+  struct sss *s = malloc (sizeof (*s));
+can cause a somewhat hard to track bug.
+Memory allocation in C++
+While C++ is mostly backwards compatible with C, it has one glaring incompatibility with far reaching consequences: C++ does not allow implicit casts from void * to other pointer types. This prevents most C code from compiling under a C++ compiler, particularly if the C code contains calls to malloc.
+Why did they eliminate implicit casts from void *? Such implicit casts were probably viewed as a hole in the type system. In general, Stroustrup deprecates any use void * for something other than "low-level software," because he feels that with C++'s protection mechanisms all pointers should be typed. More importantly, in C, if p1 and p2 are pointers, the two statements
+
+p1 = p2;
+p1 = (void *) p2;
+will have the same effect if they both compile. The same could not be guaranteed by C++. To implement multiple inheritance, the compiler must actually change the values of pointers during some casts. It can't know which value you eventually want when converting to a void *.
+Thus, no ordinary function can perform the role of malloc in C++--there is no suitable return type. More importantly, even, C++ classes have constructors and destructors that must be called when the objects are allocated and freed. The C++ compiler must be aware of memory allocation so as to ensure that proper constructors are called for a new object, and to create a pointer of the appropriate type. Thus, C++ has a special syntax for allocating and freeing memory. It uses the new and delete operators, with the following syntax:
+
+[::] "new" ["(" expression-list ")"] {new-type-id | "(" type-id ")"} ["(" expression-list ")"]
+[::] "delete" ["[]"] cast-expression
+Some examples:
+class foo { /* ... */ };
+
+void
+f ()
+{
+  foo *foop = new foo;
+  char *string = new char[20];
+  int *intp = new int (7);
+
+  // ...
+
+  delete intp;
+  delete[] string;
+  delete foop;
+}
+The final, optional "expression-list" in a new statement is a list of arguments passed to the allocated object's constructor. In the example above, the integer to which intp points gets initialized to the value 7. Note that arrays are allocated slightly differently, and must be deleted with delete[]. The actual functions being called to allocate the memory are defined as follows:
+void *operator new (size_t);
+void operator delete (void *);
+void *operator new[] (size_t);      // for arays
+void operator delete[] (void *);
+The operator new function can be overloaded, provided that it always returns void * and has a first argument of type size_t. The first optional expression-list in new's syntax passes additional arguments to overloaded operator new functions. For instance, the standard C++ library's default new throws an exception when it runs out memory. An overloaded version of new returns a NULL pointer instead. This overloaded new is defined as:
+struct nothrow_t {};
+extern const nothrow_t nothrow;
+void *operator new throw() (size_t, const nothrow_t&);
+and can be called as
+  foo *fp = new (nothrow) foo;
+  if (!fp) {
+    /* Deal with being out of memory */
+  }
+Another standard new, the so-called "placement-new," doesn't allocate memory at all, but can be called to invoke an object's constructor on an arbitrary piece of memory. It is typically defined as:
+inline void *
+operator new(size_t, void *p)
+{
+  return p;
+}
+Except for automatic variables, operator new is the only way to call an object's constructor in C++.
+In addition to overloaded global new functions, each class can have its own set of operator new and delete functions. Note, however, that operator delete cannot be overloaded. There is at most one operator delete and one operator delete[] per class. While the global ::operator delete and delete[] take one argument of type void *, per-class operators can optionally take a second argument of type size_t. This second argument will contain the size of the deleted chunk of memory.
+
+delete vs. delete[] and free
+Why are operator new and operator new[] different? One often wants to implement a simple new/delete for a particular class (for instance by keeping a freelist) while not worrying about cases where one must allocate different-sized chunks of memory. Defining operators new and delete for a class but not new[] and delete[] accomplishes exactly this.
+Why are operator delete and delete[] different? First, given a pointer of type foo *, the compiler has no way of knowing if it points to one foo or an array of them--in short, the compiler doesn't know which memory allocator was used to allocate the memory pointed to by foo. Second, when the elements of an array have destructors, the compiler must remember the size of the array so as to destroy every element. Even when array elements don't have destructors, the per-class operator delete functions may rely on being told the exact size of what is being freed. For non-array types, the compiler can reconstruct the size from the type of the pointer being freed (in the case of deleting a supertype, the compiler gets the actual size from the virtual function table if there is a virtual destructor). Thus, when allocating an array, the compiler must sometimes stash its length somewhere; operator delete[] retrieves the length to perform the necessary destruction and deallocation.
+
+The global operator delete and delete[] functions cannot take a second size_t argument. For types without destructors, then, the global operators new and new[] essentially perform the same function. They are usually both just wrappers around malloc. However, the compiler may treat memory allocated by the various allocators differently even when it doesn't need to. Thus, any memory allocated with new[] must be freed with delete[], memory allocated with new freed with delete, and memory allocated with malloc freed with free.
+
+The most obvious way of dynamically allocating n bytes of memory is to call new char[n]. Unfortunately, memory allocated this way must subsequently be freed with delete[], which may lead to inconsistent or counter-intuitive function interfaces. Consider the following C code:
+
+#include <stddef.h>
+
+typedef struct intlist {
+  int size;
+  int i[1];
+} intlist;
+
+intlist *
+makeintlist (int size)
+{
+  intlist *ilp = malloc (offsetof (intlist, i[size])); /* not C++ */
+  ilp->size = size;
+  return ilp;
+}
+Assigning the void * returned by malloc to a variable of type intlist * will cause a compliation error in C++. How, then, should we translate this code to C++? Here are several possibilities.
+intlist *ilp = new intlist;
+intlist *ilp = (intlist *) malloc (offsetof (intlist, i[size]));
+intlist *ilp = (intlist *) new char[offsetof (intlist, i[size])];
+Case 1 will allocate an incorrect amount of memory--the definition of struct intlist only leaves room for one integer. Makeintlist actually overallocates the structure so users can access elements beyond the end of the array i. Case 3, though it may work in practice, is technically incorrect. Memory returned by new char[...] will not necessarily meet the alignment requirements of a struct intlist.
+In either case 2 or 3, the person invoking the function will have to remember how to free the object--with either free or delete[]. It might provide a more intuitive interface if the user could instead free such an object with the simple scalar ::operator delete. In this case, the memory should be allocated through an explicit call to ::operator new:
+
+  intlist *ilp = (intlist *) operator new (offsetof (intlist, i[size]));
+Though the compiler no longer knows the size of the memory pointed to by ilp, this should not be a problem--the type intlist has no member operator delete, and the global ::operator delete doesn't take the size_t argument.
+Specialized allocators
+Specialized allocators can use overloaded global ::operator new functions. Consider an arena allocator that allocates objects from a large pool of memory by simply incrementing a pointer. All objects are freed at once by deleting the entire pool. Here is a potential arena implementation and use in C++:
+class arena {
+  /* ... */
+  arena (const arena &);            // No copying
+  arena &operator= (const arena &); // No copying
+ public:
+  arena ();
+  ~arena ();
+  void *allocate (size_t bytes, size_t alignment) { /* ... */ }
+};
+
+inline void *
+operator new (arena &a, size_t bytes)
+{
+  return a.allocate (bytes, sizeof (double));
+}
+
+inline void *
+operator new[] (arena &a, size_t bytes) // This function is bad news
+{
+  return a.allocate (bytes, sizeof (double));
+}
+
+class foo { /* ... */ };
+
+void
+f ()
+{
+  arena a;
+
+  char *string = new (a) char[80]; // opreator new[] (arena &, size_t)
+  int *intp = new (a) int;         // opreator new (arena &, size_t)
+  foo *fp = new (a) foo;           // better hope foo::~foo() isn't useful
+
+  /* No need to free anything before returning */
+}
+This example shows an arena object, a, allocated on the stack. Several chunks of memory are then allocated from the arena. When f finally returns, a goes out of scope and its destructor is invoked. The destructor will free everything a allocated all at once. There is no need to delete individual pointers. (In fact, doing so would be a serious programming error.)
+Though this may seem nice on the surface, there are some fairly ugly aspects to this use of new. Consider what happens during "new (a) foo". Two functions are invoked: the arena allocator--operator new (arena &, size_t)--and foo's default constructor, foo::foo(). Operator new does not know what type is being allocated, while foo::foo() doesn't know what memory allocator is being used. If, for instance, foo::foo() dynamically allocates memory, it cannot do so from the arena in which it resides itself. Thus, the speed benefit of an arena allocation may be overshadowed by several heap allocations within foo::foo(). Moreover, foo's destructor must be called before freeing the arena so as to avoid a memory leak.
+
+C++ does allow explicit calls to destructors, so function f can be fixed with:
+
+void
+f ()
+{
+  arena a;
+
+  // ...
+  foo *fp = new (a) foo;           // must be destroyed
+  // ...
+  fp->~foo ();
+}
+Alternatively, if foo:~foo() only needs to free memory (as opposed to other resources such as file descriptors or locks), foo could provide an overloaded constructor that takes an arena reference and ensures all further memory is allocated from that arena. In that case, f could be implemented as:
+void
+f ()
+{
+  arena a;
+
+  // ...
+  foo *fp = new (a) foo (a);       // Tell foo about our arena
+  // foo no longer needs its destructor invoked
+}
+Unfortunately, no amount of collaboration between the implementor of arena and the implementor of foo can hide these details from the user.
+A potential problem may arise if the constructor for foo throws an exception. Because constructors have no return values in C++, exceptions are the simplest way for them to indicate failure. When constructors throw exceptions, the compiler will try to free the memory allocated by new. While this may ordinarily be a good thing, it would have disastrous consequences in the case of the arena allocator, where calling ::operator delete on a pointer in the middle of the arena would have unpredictable results. One can avoid this problem through so-called "placement-delete" functions that, after the first argument, match the argument types of particular placement new operators. For the arena type, we should therefore declare an empty placement delete:
+
+inline void operator delete (void *, arena &) {}
+Keep in mind that placement delete operators can only get invoked by by constructors throwing exceptions. Once an object has been constructed, there is in general no way to delete it with a placement delete. In the case of scalars, you can explicitly call a placement delete:
+  arena a;
+  foo *fp = new (a) foo;
+  operator delete (fp, a);  // Problematic
+However, such usage doesn't have much use and poses problems: First fp's destructor never gets invoked. Second, in the case of arrays, the pointer returned by new is not necessarily the same value that the function void *operator new[] (size_t, ...) returns. delete[] may need to translate a pointer before calling the operator delete[] function. Thus, it is not safe to pass an array pointer allocated with new to an operator delete function. Beware of the <new.h> header file that comes with egcs and g++--It does not define a simple placement delete. If you use simple placement new with constructors that throw exceptions, you should define an operator delete as follows to avoid unexpected results.
+inline void operator delete (void *, void *) {}
+From my reading of the standard, the language might not require this operator delete. However, egcs currently does call operator delete (void *) when constructors throw exceptions from operator new (size_t, void *). Thus whether because of the language or just a bug in the compiler, you need to define this placement delete.
+Another annoyance of operator new is that operator new[] (arena &, size_t) doesn't know what kind of objects it is allocating. If it did, it might be able to relax the alignment requirements on arrays of certain objects. Worse yet, as we will see in the next section, it is almost certainly incorrect to use the arena operator new[] for any class with a destructor, and probably incorrect to use the arena operator new[] at all.
+
+Dangers of overloading ::operator new[]
+g++ comes with a "placement" operator new[] defined as follows:
+inline void *
+operator new[](size_t, void *place)
+{
+  return place;
+}
+Let obj be a class with a destructor. Suppose you have sizeof (obj[10]) bytes of memory somewhere and would like to construct 10 objects of type obj at that location. (C++ defines sizeof (obj[10]) to be 10 * sizeof (obj).) Can you do so with this placement operator new[]? For example, the following code would seem to do so:
+obj *
+f ()
+{
+  void *p = special_malloc (sizeof (obj[10]));
+  return new (p) obj[10];       // Serious trouble...
+}
+Unfortunately, this code is incorrect. In general, there is no guarantee that the size_t argument passed to operator new[] really corresponds to the size of the array being allocated. The compiler must remember how many elements the array contains so as to call the proper number of destructors when the array is deleted. One way to do this is to allocate slightly more memory than needed and to stick the length of the array right before the pointer to the array. Thus, you would need to do something horrible like this to work around the problem:
+struct sizenew_t {};
+const sizenew_t sizenew;
+inline void *
+operator new[] (size_t size, const sizenew_t &, size_t *sizep)
+  throw ()      // Don't let NULL return throw an exception
+{
+  *sizep = size;
+  return NULL;  // Don't let compiler call constructors
+}
+
+obj *
+f ()
+{
+  size_t size;
+  (void) new (sizenew, &size) obj[10];
+  void *p = special_malloc (size);
+  return new (p) obj[10];
+}
+Of course, by this point you were probably better off just defining an overloaded operator new[] around special_malloc. Thus, placement new[] is never permissible for types with destructors. With g++, it happens to work on types without destructors, but one probably cannot count on this fact for all compilers. This is probably what Stroustrup means in the 3rd edition (p. 257) when he writes, "There is no equivalent to placement new for arrays. Nor need there be, since arbitrary types can be allocated by placement new."
+If placement operator new[] can't work, what about the arena operator new above? It certainly was convenient and intuitive to say "new (a) char[80]" for 80 bytes of space. Does this create a problem? In fact, the arena new[] above will work with g++, but will cause a memory leak on other compilers. According to The C++-FAQ-Lite:
+
+[16.13] After p = new Fred[n], how does the compiler know there are n objects to be destructed during delete[] p?
+
+Short answer: Magic.
+
+Long answer: The run-time system stores the number of objects, n, somewhere where it can be retrieved if you only know the pointer, p. There are two popluar techniques that do this. Both these techniques are in use by commercial grade compilers, both have tradeoffs, and neither is perfect. These techniques are:
+
+Over-allocate the array and put n just to the left of the first Fred object[33.5].
+Use an associative array with p as the key and n as the value[33.6].
+The second technique, storing array sizes in an associative array, is actually used by Cfront, among others. It cannot be overlooked. In such an implementation, allocating an array requires a small amount of memory, separate from that returned by operator new[], to enter the array size into an associative array. That memory can only be freed by calling delete[]. However, delete[] cannot be overloaded--there is only one global delete[] function, tied to a particular memory allocator. Thus, one cannot call ::delete[] on a pointer that was not allocated with the same memory allocator that ::operator new[] (size_t) uses (as opposed to one of the other overloaded global operator new[] functions). Since ::operator delete[] probably uses malloc and the arena uses a different mechanism, there is no way to free the associative array entry recording the size of arena-allocated arrays.
+For that reason, operator new[] (size_t, arena &) should probably not exist. Instead of writing
+
+  char *string = new (a) char [80];
+people will have to type
+  char *string = (char *) a.allocate (80, 1);
+which actually makes better use of memory through relaxed alignment requirements, but is far less intuitive.
+Punching a hole in the type system
+If operator new is starting to sound gross, you may want to revert to C-like memory allocation functions. Alternatively, suppose you need to convert huge amounts of C code to C++, and that C code is riddled with calls to malloc. Most calls to malloc will involve an implicit cast from void *--illegal in C++. Is there any way to compile such code without inserting some huge number of casts? While you cannot implicitly cast a void * to another builtin type in C++, you can construct other classes that can implicitly be cast to other types. For instance:
+class voidp {
+  void *p;
+public:
+  voidp (void *pp) : p (pp) {}
+  template<class T> operator T *() { return (T *) p; }
+};
+When converting C to C++, you can define malloc like this:
+inline voidp
+mymalloc (size_t size)
+{
+  return malloc (size);
+}
+#define malloc mymalloc
+The void * from malloc will implicitly be converted to a voidp using voidp::voidp (void *), and then the voidp will implicitly convert itself to whatever pointer type you are trying to assign to.
+Of course, as in C, such memory allocation is not type safe. Moreover, the memory allocation process is entirely separate from the invocation of constructors. Thus, you certainly can't call malloc to allocate any types with virtual functions. It might, however, be reasonable for a simple arena allocator used only on basic types to return voidp.
+
+Note that as of version 2.8.1, g++ will not compile voidp correctly. However, the code does work with egcs.
+
+Debugging memory allocation in C++
+With a simple debugging malloc, it typically takes about an hour to eliminate memory leaks from tens of thousands of lines of code. In C, such debugging mallocs can easily be implemented using macros. Can one do the same thing in C++?
+The short answer is no. Not for a general C++ program. However, the benefit of such a tool is so great that it is worth shaping a project around a plan for effectively debugging memory problems. If one restricts oneself to particular coding conventions, it is possible in C++ to reap some of the benefits of a C debugging malloc.
+
+Here is a simple attempt at using a debugging malloc in C++:
+
+void *_malloc_leap (const char *file, int line, size_t size);
+void _free_leap (const char *file, int line, void *);
+
+struct dmalloc_t {};
+extern struct dmalloc_t dmalloc;
+
+inline void *
+operator new (size_t size, dmalloc_t, const char *file, int line)
+{
+  return _malloc_leap (file, line, size);
+}
+inline void *
+operator new[] (size_t size, dmalloc_t, const char *file, int line)
+{
+  return _malloc_leap (file, line, size);
+}
+
+inline void
+operator delete (void *p)
+{
+  _free_leap ("unknown file", 0, p);
+}
+
+#define NEW new (dmalloc, __FILE__, __LINE__)
+#define new NEW
+Code that looks like this:
+void
+f ()
+{
+  int *intp = new int;
+  delete intp;
+}
+Will now expand to something like this:
+void
+f ()
+{
+  int *intp = new (dmalloc, "foo.C", 31) int;
+  delete intp;
+}
+Which indeed will result in _malloc_leap getting called with the proper line number information. So far so good. Unfortunately, _xfree_leap still doesn't get line number information. Thus, it becomes harder to track down bugs like doubly freed pointers; there will be no good record of where the first free operation occurred. Nonetheless, the location from which memory is allocated is sufficient to track many sorts of bugs. It is well worth the effort of trying to make this debugging new work. What about types with static operator new/delete functions defined? Consider the following code:
+class bar {
+  /* ... */
+ public:
+  void *opreator new (size_t);
+  void operator delete (void *, size_t);
+  /* ... */
+};
+
+void
+f ()
+{
+  bar *bp = new bar;
+  delete bp;
+}
+After preprocessing, f will expand to something:
+void
+f ()
+{
+  bar *bp = new (dmalloc, "bar.C", 23) bar;
+  delete bp;
+}
+Thus, allocation occurs through the global ::operator new, but the pointer is freed using bar::operator delete. This is a serious programming error. Per-class operator new and delete often only exist as a performance optimization. (Though certain situations do require old pointers to recycled objects to keep pointing to the same type of object.) If the per-class operator new/delete functions are purely optimizations, there is no harm in simply disabling them during debugging. Using a preprocessor symbol DMALLOC to signify that one is using debugging malloc, one can disable class-specific operators:
+#ifdef DMALLOC
+#define delete ::delete
+#endif /* DMALLOC */
+
+/* ... */
+
+class bar {
+  /* ... */
+ public:
+#ifndef DMALLOC
+  void *opreator new (size_t);
+  void operator delete (void *, size_t);
+#endif /* !DMALLOC */
+  /* ... */
+};
+The definition of delete as ::delete will ensure that all deletion occurs through the global delete operator. It will also catch any class-specific delete operators not commented out. An "operator ::delete" member function should not compile properly.
+Class-specific allocators are a pain when debugging, but they are manageable. Unfortunately, arena allocation brings on some far more serious problems. Recall we were allocating objects like this:
+
+void
+f ()
+{
+  arena a;
+  foo *fp = new (a) foo;
+  fp->~foo ();
+}
+When trying to debug heap allocation, the preprocessor will expand f to something like this:
+void
+f ()
+{
+  arena a;
+  foo *fp = new (dmalloc, "arena_test.C", 14) (a) foo;
+  fp->~foo ();
+}
+Syntax error! In fact, short sticking a text filter between the C++ preprocessor and compiler, there is no way to make this work cleanly. One must therefore either stop defining new as a macro and change every single invocation of the default new to use NEW, or else radically change the syntax by which one allocates from arenas and other specialized allocators.
+Changing most uses of new to NEW is problematic, particularly when a project regularly imports lots of code that uses doesn't follow the same convention. Changing the syntax of specialized allocations is incredibly tricky, however. It's not enough simply to write
+
+  foo *fp = arena_new (a) foo;
+because there is no possible definition of arena_new. When new has been #defined, there simply is no way to get the single token new into the output of the preprocessor without first #undefing it (which a macro like arena_new cannot do). There also is no way to call a constructor on an object without calling new. Certain library template functions like construct will construct a single object using placement new, but constructing an array is considerably trickier.
+Don't use operator new
+Most of the problems mentioned in this document stem from the fact that C++ took a particular class of functionality, namely memory allocation and object construction, and threw a very specific piece of syntax at the problem. This is as bad as hard-coding printf's syntax into the C compiler and disallowing other varargs functions--it may work in the the common case but it severely restricts the flexibility of the language. The good news is that C++ is almost flexible enough as a language to define constructs that look like operator new but aren't magically blessed by the compiler.
+(I say almost because there are two exceptions: First, because C++ has no varargs templates, new-like functions in C++ must set some fixed, though arbitrarily large, maximum number of constructor arguments. Second, the compiler's memory allocation functions have the benefit of knowing whether a type has a destructor or not. This allows some space and time optimization in certain circumstances.)
+
+Our goal is then to define memory allocators other than new and delete. Let us call these functions New, Delete, and Delarray. They will behave as follows:
+
+void
+f ()
+{
+  int *intp = New (int) (7);
+  foo *fp = New (foo);
+  char *string = New (char) [20];
+
+  Delete (foo);
+  Delete (intp);
+  DelArray (string);
+}
+There will have to be a few syntactic differences between New and new. New's type argument must be surrounded by parentheses, whereas new only requires parentheses around complex types (those containing parentheses themselves). Non-constant array dimentions will have to go outside the parentheses containing the type. New also won't have any placement syntax, which is fine since it also has no special support from the compiler--other allocators can simply go by other names. Delete and Delarray are similar to delete and delete[], but their arguments must also be in parentheses.
+
+Before actually implementing New, we need a few pieces of infrastructure. One of the big advantages the compiler's new has over a user-defined one is that the compiler knows what types have destructors. Thus, for instance, when allocating an array of chars the compiler doesn't need to remember its length. While the language provides no way of knowing for sure if a type has a destructor, we can approximate the problem using templates:
+
+#include <new>
+#include <cstdlib>
+
+#define size_t unsigned int	// Work around specialization bug in egcs
+
+/*
+ * isTypeSimple(T) - returns true only if T has no constructor
+ *                   or destructor.  By default only built in
+ *                   types are simple, but more can be declared
+ *                   simple with SIMPLETYPE(T)
+ */
+
+template<class T> struct SimpleType {
+  enum {value = 0};
+};
+template<class T> struct SimpleType<T *> {
+  enum {value = 1};
+};
+template<class T> struct SimpleType<const T> {
+  enum {value = SimpleType<T>::value};
+};
+template<class T, size_t n> struct SimpleType<T[n]> {
+  enum {value = SimpleType<T>::value};
+};
+#define SIMPLETYPE(T)				\
+template<> struct SimpleType<T> {		\
+  union {					\
+    T t;					\
+  } catcherr;					\
+  enum {value = 1};				\
+}
+
+SIMPLETYPE (bool);
+SIMPLETYPE (char);
+SIMPLETYPE (unsigned char);
+SIMPLETYPE (short);
+SIMPLETYPE (unsigned short);
+SIMPLETYPE (int);
+SIMPLETYPE (unsigned int);
+SIMPLETYPE (long);
+SIMPLETYPE (unsigned long);
+SIMPLETYPE (float);
+SIMPLETYPE (double);
+SIMPLETYPE (long double);
+
+SIMPLETYPE (long long);
+SIMPLETYPE (unsigned long long);
+
+#define isTypeSimple(T) ((bool) SimpleType<T>::value)
+
+template<class T, bool S = isTypeSimple (T)> struct EnsureSimple;
+template<class T> struct EnsureSimple<T, true> {};
+We build a template type called SimpleType containing an enum tag value such that SimpleType::value is true only if T has no constructors or destructors. SimpleType::value is 0 by default, but we recursively set it to 1 using template specialization. All pointers are simple types, all const versions of simple types are simple, all arrays of simple types are simple, and finally all built-in types are also simple.
+
+The macro SIMPLETYPE(T) declares that T is a simple type. Note that it declares a structure containing a union containing an field of type T. C++ forbids unions containing objects with constructors or destructors. Thus, if the macro SIMPLETYPE is misused it will only result in a compilation error. Note also that template EnsureSimple has been partially specialized to be defined on simple types but not non-simple types. This can be used in places where compile time errors are appropriate for non-simple template arguments.
+
+Next, using a similar trick of recursive templates, we define a macro TypeOfArrayBase which extracts the cell type of a possibly multidimensional array:
+
+/*
+ * TypeOfArrayBase(T[...][...]...) returns type T
+ */
+
+template<class T>
+struct ArrayBaseType
+{
+  typedef T type;
+};
+template<class T, size_t n>
+struct ArrayBaseType<T[n]>
+{
+  typedef ArrayBaseType<T>::type type;
+};
+
+#define TypeOfArrayBase(T) ArrayBaseType<T>::type
+We also would like to know the minimum safe allignment for a type. C++ guarantees that for any type T, sizeof (T[n]) == n * sizeof (T). This means that a type T must be alignable to any multiple of sizeof (T), so we use sizeof (T), or sizeof (double), whichever is smaller, as the safe alignment value:
+/*
+ * typeAlignment(T) - returns a power of two to which objects of
+ *                    type T can safely be aligned.
+ */
+
+template<class T> struct AlignType {
+  enum {value = (sizeof (T) > 4 ? sizeof (double)
+		 : sizeof (T) > 2 ? 4 : sizeof (T) > 1 ? 2 : 1)};
+};
+template<class T, size_t n> struct AlignType<T[n]> {
+  enum {value = AlignType<TypeOfArrayBase(T)>::value};
+};
+
+#define TYPEALIGNMENT(T, alignment)		\
+template<class T> AlignType<T> {		\
+  enum {value = alignment};			\
+}
+
+#define typeAlignment(T) AlignType<T>::value
+Now we are getting ready to write a memory allocator. All allocators support allocating bytes with alloc, freeing bytes with dealloc, cloning themselves with get_alloc, and freeing clones with free_alloc. By default, memory for all types is managed by the alloc and dealloc functions of an Allocator. However, this can be overridden per type by specializing the NewOps template.
+/*
+ * Default memory allocator
+ */
+
+struct Allocator {
+  virtual void *alloc (size_t) const = 0;
+  virtual void dealloc (void *) const = 0;
+
+  virtual const Allocator *get_alloc () const = 0;
+  virtual void free_alloc () const = 0;
+};
+
+template<class M, class T, bool A = false>
+struct NewBase {
+  enum { destruct = !isTypeSimple (T) };
+  static void preconstruct (const M &m, T*) {};
+  static void *alloc (const M &m, size_t n) { return m.alloc (n); }
+  static void dealloc (const M &m, void *p) { m.dealloc (p); }
+};
+
+template<class M, class T, bool A = false>
+struct NewOps : public NewBase<M, T, A> {};
+
+The default memory allocator is called Malloc. Here's how one can quite eazily specialize memory allocation for a class foo:
+
+// struct Malloc_t : Allocator { ... };
+// const Malloc_t Malloc = Malloc_t ();
+
+template<> struct NewOps<Malloc, foo> : public NewBase<Malloc, foo> {
+  static void *alloc (const M &m, size_t n) {
+    /* Check freelist, are return preallocated object.  Otherwise,
+     * allocate new object using m.alloc (n). */
+  }
+  static void dealloc (const M &m, void *p) {
+     /* Add (foo *) p to the freelist. */
+  }
+};
+This only specializes allocation for single objects. To specialize the allocation of arrays, one would specify the third template argument, A, as true.
+What is preconstruct? Occasionally one might like to alter the behavior of constructors and destructors according to the memory allocator used. For instance, consider a hypothetical arena allocator of type Arena_t. Suppose a class foo's constructors must allocate memory, and that foo's destructor frees the memory. Given the discussion of arena's above, it would be much simpler if foo could allocate its memory using the arena it was allocated with, and then not have to worry about having its destructor called. This can be achieved as follows:
+
+class foo {
+  /* ... */
+public:
+  const Allocator *a;
+  /* ... */
+};
+
+template<class M, bool A>
+NewOps<M, foo, A> : NewBase<M, foo, A>
+{
+  static void preconstruct (const M &m, foo *p) { p->a = NULL; }
+}
+
+template<bool A>
+NewOps<Arena_t, foo, A> : NewBase<M, foo, A>
+{
+  enum {destruct = 0};
+  static void preconstruct (const Arena_t &m, foo *p)
+    { p->a = m.get_alloc (); }
+}
+Here we have specialized NewOps for Arena_t allocators, so that the arena allocator gets stored in the field a and the destructor never gets called. (XXX - a could be made private and NewOps a friend class. Unfortunately, g++ cannot parse template friend declarations.)
+
+Finally, we define the Construct object that actually calls the memory allocator and invokes objects' constructors.
+
+
+template<class M, class T> class Constructor;
+template<class T, class M> Constructor<M, T> Construct (const M &);
+
+#define AllocNew(args)				\
+    void *p = scalarops::alloc (m, sizeof (T));	\
+    if (!p)					\
+      throw bad_alloc ();			\
+    try {					\
+      scalarops::preconstruct (m, (T *) p);	\
+      return new (p) T args;			\
+    }						\
+    catch (...) {				\
+      scalarops::dealloc (m, p);		\
+      throw;					\
+    }
+
+template<class M, class T>
+class Constructor<M, T>
+{
+  Constructor ();
+  Constructor (const Constructor &);
+  Constructor &operator= (const Constructor &);
+
+  Constructor (const M &mm) : m (mm) {}
+  friend Constructor Construct<T> (const M &);
+
+  typedef NewOps<M, T, false> scalarops;
+  typedef NewOps<M, T, true> arrayops;
+
+  enum {skip = (!arrayops::destruct ? 0
+		: sizeof (size_t) > typeAlignment (T) ? sizeof (size_t)
+		: typeAlignment (T)) };
+
+  const M &m;
+
+public:
+  operator T* () { AllocNew (/* empty */) }
+  T *operator() () { AllocNew (()) }
+
+  template<class A1> T*
+  operator() (A1 a1) { AllocNew ((a1)) }
+
+  template<class A1, class A2> T*
+  operator() (A1 a1, A2 a2) { AllocNew ((a1, a2)) }
+
+  /* We could keep going for more contructor arguments */
+
+  T *operator[] (size_t n) { 
+    char *base = (char *) arrayops::alloc (m, skip + sizeof (T[n]));
+    T *p = (T *) (base + skip);
+
+    if (!base)
+      throw bad_alloc ();
+    if (skip)
+      *(size_t *) base = n;
+
+    if (!isTypeSimple (T)) {
+      size_t i = 0;
+      try {
+	for (i = 0; i < n; i++) {
+	  arrayops::preconstruct (m, &p[i]);
+	  new ((void *) &p[i]) T;
+	}
+      }
+      catch (...) {
+	while (i--)
+	  p[i].~T ();
+	arrayops::dealloc (m, base);
+	throw;
+      }
+    }
+    return p;
+  }
+
+  void del (T *p) {
+    if (scalarops::destruct)
+      p->~T ();
+    scalarops::dealloc (m, p);
+  }
+
+  void delarray (T *p) {
+    void *base = p;
+    if (arrayops::destruct) {
+      base = (char *) p - skip;
+      size_t max = *(size_t *) base;
+      for (size_t i = max; i-- > 0;)
+	p[i].~T ();
+    }
+    else
+      base = p;
+    arrayops::dealloc (m, base);
+  }
+};
+
+#undef AllocNew
+Users might try to pass an array type to New, for instance by saying "New (char[32][32]) [n]." In this case we want to return memory of type char[n][32][32] (i.e. char (*)[32][32]). We don't support this for non-simple types, however. EnsureSimple guarantees that non-simple types will generate an error when Construct is specialized for arrays of them.
+
+template<class M, class T, size_t n>
+class Constructor<M, T[n]> : EnsureSimple<T>
+{
+  Constructor ();
+  Constructor (const Constructor &);
+  Constructor &operator= (const Constructor &);
+
+  Constructor (const M &mm) : m (mm) {}
+  friend Constructor Construct<> (const M &);
+
+  typedef TypeOfArrayBase(T) base_t;
+  typedef T array_t[n];
+  typedef NewOps<M, base_t, true> arrayops;
+
+  const M &m;
+
+public:
+  operator T* ()
+    { return (T *) arrayops::alloc (sizeof (array_t)); }
+  array_t *operator[] (size_t d)
+    { return (array_t *) arrayops::alloc (sizeof (array_t[d])); }
+
+  void del (T *p) { arrayops::dealloc (m, p); }
+  void delarray (array_t *p) { arrayops::dealloc (m, p); }
+};
+
+To simplify typing, we use a template function (which can infer its type arguments) to greate Construct objects. A similar Destruct function deletes objects.
+
+template<class T, class M> inline Constructor<M, T>
+Construct (const M &m)
+{
+  return Constructor<M, T> (m);
+}
+
+template<class M, class T> inline void
+Destruct (const M &m, T*p, bool array = false)
+{
+  if (!array)
+    Construct<T> (m).del (p);
+  else
+    Construct<T> (m).delarray (p);
+}
+Now we can define New, Delete and Delete easily.
+/*
+ * New / Delete / Delarray
+ */
+
+struct Malloc_t : Allocator {
+  void *alloc (size_t n) const { return malloc (n); }
+  void dealloc (void *p) const { free (p); }
+
+  Allocator *get_alloc () const { return const_cast<Malloc_t *> (this); }
+  void free_alloc () const {}
+};
+
+const Malloc_t Malloc = Malloc_t ();
+
+#define Malloc() Malloc
+
+#define New(T) Construct<T> (Malloc ())
+#define Delete(p) Destruct (Malloc (), p)
+#define Delarray(p) Destruct (Malloc (), p, true)
+Arenas Revisited
+We can use the destruct field of the appropriate NewOps structure to decide if a destructor really needs to be called. The arena itself can then keep track of all the destructors it needs to call, and call them later.
+class Destroyer {
+public:
+  void virtual operator() () = 0;
+};
+
+template<class T> class objDestroyer : public Destroyer
+{
+  T *obj;
+  objDestroyer ();
+  objDestroyer (T *o) : obj (o) {}
+  friend Destroyer *destroyer (T *);
+public:
+  void operator() () {obj->~T ();}
+};
+
+template<class T> inline Destroyer *
+destroyer (const Allocator *a, T *p)
+{
+  return new (a->alloc (sizeof (objDestroyer))) objDestroyer<T> (p);
+}
+Debugging
+You want to use dmalloc? No sweat:
+/*
+ * Debug malloc
+ */
+
+struct DebugMalloc_t : Allocator {
+  const char *const file;
+  const int line;
+
+public:
+  DebugMalloc_t (const char *f, int l) : file (f), line (l) {}
+
+  void *alloc (size_t n) const {return _malloc_leap (file, line, n);}
+  void dealloc (void *p) const {return _free_leap (file, line, p);}
+
+  Allocator *get_alloc () const
+    { return new (alloc (sizeof (*this))) DebugMalloc_t (*this); }
+  void free_alloc () const { dealloc ((void *) this); }
+};
+
+#undef Malloc
+#define Malloc() DebugMalloc_t (__FILE__, __LINE__)
+Is this a joke?
+The replacement New proposed here is admittedly somewhat convoluted. Worse yet, there are serious problems when using type names containing commas. For example, a statement like "New (Array<bool, 5>)" will fail to compile because the preprocessor will complain of too many arguments to New. (ANSI C '99 has added macros with variable numbers of arguments, which will solve this particular problem if incorporated into C++.) Worse yet, "New ((Array<bool, 5>))" also fails to compile, because extra parentheses are not allowed in the template arguments to Construct.
+
+Though you may not want to use the replacement New proposed here, the fact is that C++'s operator new is overly restrictive, and better functionality can essentially be implemented in the language itself. Something went badly wrong in the design of C++. As a simple workaround, consider doing the following. In a central header file:
+
+#define New new
+Then, in your code, always use capital "New" for normal allocation and lower-case "new" for placement allocation. You can later introduce some form of debugging malloc like this:
+#ifdef DMALLOC
+
+struct dmalloc_t {};
+extern struct dmalloc_t dmalloc;
+void *operator new (size_t, dmalloc_t, char *, int);
+void *operator new[] (size_t, dmalloc_t, char *, int);
+#define New new (dmalloc, __FILE__, __LINE__)
+
+#else /* !DMALLOC */
+
+#define New new
+
+#endif /* !DMALLOC */
+Note that you may also need to throw an "#ifndef DMALLOC" around any per-class operator delete functions.
+struct foo {
+  // ...
+#ifndef DMALLOC
+  static void *operator new (size_t n) { /* ... */ }
+  static void operator delete (void *p) { /* ... */ }
+#endif /* !DMALLOC */
+  // ...
+};
+Without the ifndef, when DMALLOC is defined "foo *fp = New foo" would invoke ::operator new, while "delete fp;" would invoke foo::operator delete--probably not what you want. You can catch stray per-class operator delete functions with:
+#define delete ::delete
+Moral of the story
+When a programing language doesn't support some necessary operation, one shouldn't simply add new syntax for that specific operation. Instead, one should ask, "How can I ammend the language to make this operation implementable in a standard library?" The answer may be a much simpler, cleaner, and more powerful set of mechanisms than the one tailored for a specific problem.
+
+C++ needed a way to perform type-safe memory allocation. Such a scheme could have been implemented entirely as a library function, given the right support. Such support might have included ways to infer whether classes have destructors at compile time, support for calling constructors directly and even taking their addresses, and more. These features might even have been useful in more contexts than memory allocation.
+
+Instead, Stroustrup introduced operator new, a disgusting piece of syntax inadequate for the job. After many complaints, new's functionality was finally extended to include per-class operator new[] and placement new, still an imperfect solution.

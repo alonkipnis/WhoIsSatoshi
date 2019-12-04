@@ -1,0 +1,57 @@
+Hi all, Max here. I'm the CEO of “Affirm,” the next generation financial services company offering consumer credit at the point of sale, and the Chairman of “Glow,” a women’s reproductive health company. Both companies were created and launched from my San Francisco based innovation and investment lab, “HVF.” Some of my past credits include serving as the CTO and one of the original cofounders of PayPal, helping start Yelp, founding the company “Slide,” and serving on various external boards. I'm also a proud father and husband, an avid cyclist, and self-proclaimed coffee snob. Happy to be answering your questions today, so please fire away!
+
+mixed bag -- some stuff is spot on, some views/explanations are fairly one-sided, and a handful of factual errors. Eric was there for a lot of the action, but not all of it, and so some of that shows. Generally still an entertaining read.
+
+@harrystebbings many highlights. PayPal IPO was a big day, not only financially, but as a validation of our impact, etc. Realizing that we saved the company from dying (by way of fraud-related losses) was huge (beginning of 2001). Affirm has been an awesome journey so far... Too many great people met and befriended along the way in all these adventures to count - that's the biggest highlight of them all.
+
+@logangraham speed of adaptation and revision; willingness to take directional risks with your own money, which leads to gathering a proprietary data set or multiple. Re big question -- the latter -- machine learning software will chew big industries so that startups can digest them more easily.
+
+@corleyh I realized (by looking at our metrics) that credit card fraud was going to kill our startup (PayPal) and I didn't think we could fix it in time. I thought of giving up -- and one of my closest friends Scott, and my now-wife Nellie (who were present when I realized just how bad the situation was) both told me in unison to basically man up and solve it. I whined for another ten minutes, and then agreed with them that I had to. Anytime I feel like something is just too hard to do, or too big to fix, I think of that day and try to man up.
+
+@yazinsai kinda! PayPal was creaking under the load of automated fraudulent signups, and we urgently needed a way stop it. One day I screamed at the top of my lungs to the entire engineering team "can anyone think of a task humans excel at, and computers fail?" and a brilliant coder named Dave Gausebeck answered instantly "optical character recognition!" I spent the next 72h coding it non-stop and we rolled out immediately, which had a very positive impact on the number of fraudulent signups! Later, I found out that CMU had this problem under investigation, called it CAPTCHA, and had a bunch of really nice published work on it, right around the same time. We never saw their work though, so in that sense, we did invent it too.
+
+@jeffumbro working with Elon is always interesting! He is obviously brilliant, and has an endless supply of very non-linear ideas around solving hard problems. He also believes unshakably in his inability to fail, which can be truly inspirational, and infuriating, in equal measure :)
+
+@barnettlklane to build a very long-term, truly great financial service company built with 21st century technology, yet first and foremost focused on earning and keeping its users' trust.
+
+@faramarzhashemi I get up at 5:30am, do urgent email/work stuff for an hour; then get on the bike, get my energy boost for the day pedaling. then head to the office sometime between 8 and 9, depending on the length of the ride. I wind up having too many meetings, it feels, but they are all useful :) At least half the days, I try to make it home towards 6, so I can spend some time with my kids during dinner, and read them before bed. Then I get back to email/writing/etc. I try to go to bed before midnight. Sometimes I succeed.
+
+@theo_dimarhos generally a fan, but they lack the in-person interactions (and dynamics) that make traditional schooling what it is. Some new ideas in the space are impressive (HackReactor has done some work in making the online experience seem more in-person like)
+
+@ems_hodge most challenging moment: too many to pick one... A really close collaborator died very suddenly when we were both very young, during PayPal. Having to do a layoff at Slide, looking people in the eyes, and admit that I, as the CEO, screwed up. You overcome by being honest, no matter how much it hurts, with yourself, set a course, and execute.
+
+proudest moment: PayPal IPO, many other little things that had momentous importance then... and then faded as the next challenge came up :)
+
+most surprising moment: it's a daily shocker in the world of startups :) you get used to it.
+
+@alfink92 uhm, it was.. great!? :) My favorite non-tech book is Master & Margarita. Tech-wise, I have a certain permanent love for Knuth's magnum opus, but find Structure and Interpretation of Computer Programs easier to read end-to-end quickly :)
+
+@aashaymody love the idea, never tried any of these. would love to -- always excited to experiment on myself for the sake of marginal productivity gains!
+
+@which_might twitter + links I find there is more or less all I use. News360 is an app I use a fair bit when I have the time.
+
+@mounderscore not really. maybe NY.
+
+@tigranhakobian Some good ones from the "pure business" category: Zero to One, The Hard Thing About Hard Things, The Innovator's Dilemma, Good to Great, etc. Personally, I prefer less advice, more history. From my favorite business segment: Too Big To Fail, Ascent of Money, When Genius Failed, etc. Books on applied psychology (Influence, Predictably Irrational, etc) are another way to round out primarily technological education :)
+
+@klajdi_kl ha, that is a roughly a trillion-dollar question :) Reducing interchange is a big step -- making card transactions cost same as cash.
+
+@dim25 no; I've been back exactly once in almost 25 years since I left. barely know the local startup scene.
+
+@lukasfittl I try not pre-announce things too much, but yes, I am a firm believer in the theory that people also exist outside of the borders of the United States :)
+
+@jourdanb21 find a co-founder that you really want to impress that is also obviously trying to impress you.
+
+@apoo_rv yes, sensors should serve to fundamentally reduce complexity at the edges of the network by moving the knowledge and computational problem solving (eg scheduling) to the center.
+
+@daniellevine There something truly amazing I find pretty much daily! Yesterday, I heard a song (I collect productivity-enhancing songs) by a band I've never heard of -- Acid Horse, which was awesome. Then, found out that it was literally a single-song side project by Ministry years ago :-)
+
+@matijaabicic ha! we fought like crazy over Windows NT (Elon) vs Linux (me) during PayPal. We never quite resolved our disagreement, but he once challenged me to an arm-wrestling match to resolve it. I lost that, but PayPal stayed Unix anyway :)
+
+@alexfungguy we are certainly going broader than consumer credit, but there is so much to fix there, we will still be working on it 5y from now for sure.
+
+@outdreamer I think the opportunities are staggering, so I am very bullish. Not too concerned, as the regulators seem to be a LOT smarter and savvier than even a decade ago.
+
+@jacobovitza your network/ability to recruit a great team is all that matters.
+
+@mkrk SwiftWick -- great for riding, great for every day. Love them.

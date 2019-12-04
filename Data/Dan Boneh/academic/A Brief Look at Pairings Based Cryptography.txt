@@ -1,0 +1,171 @@
+A Brief Look at Pairings Based Cryptography
+Dan Boneh∗ Stanford University
+
+Over the past few years a new tool from algebraic ge- ometry, called a bilinear group, has transformed public-key cryptography. Bilinear groups enable the development of a new generation of cryptosystems that solve long stand- ing open problems in cryptography and provide brand new functionality. In this short note we give a few examples and pose a number open problems that will hopefully be re- solved in the coming years. This note is intended as a partial annotated bibliography and is far from a complete survey.
+For simplicity, throughout this note we use terms such as “efficient algorithm” and “negligible function.” These terms can be made precise using asymptotic notation, equating “efficient” with “polynomial time” and “negligible func- tion” with “eventually less than 1/nc for all c > 0.”
+1 Bilinear Groups
+Let G be a group of prime order p. The discrete-log problem in G is as follows: given a pair g,h in G as in- put, output an integer x such that h = gx. We say that discrete-log in G is hard1 if no efficient algorithm solves the discrete log problem in G with non-negligible probability when g is chosen uniformly in G and x is chosen uniformly in Zp := (Z/pZ).
+Several families of groups are believed to have a hard discrete-log problem. The two most frequently used group families are:
+• the group Z∗q := (Z/qZ)∗ for a prime q, and
+• thegroupE(Fq)ofpointsoncertainellipticcurvesde- fined over a prime finite field Fq . The precise definition of this group is not important here.
+The group of points on an elliptic curve has an additional algebraic structure that is not available in Z∗q . In particular, there is an efficiently computable function, called the Weil pairing [55], that maps two points in E(Fq) to an element in F∗qα for some α > 0. This function is bilinear, as explained
+∗Supported by NSF and the Packard Foundation.
+1To formally define hardness of discrete-log one must define an infinite sequence of groups of increasing size; for brevity we will not do that here.
+0272-5428/07 $25.00 © 2007 IEEE DOI 10.1109/FOCS.2007.51
+below. Victor Miller [50] showed that the Weil pairing on certain elliptic curves can be computed efficiently via an al- gorithm that is now called Miller’s algorithm and is central to the development of pairing based cryptography.
+We can abstract much of the underlying algebraic geom- etry away by defining an abstract object called a bilinear group. We say that a prime order group G of order p is a bilinear group if there exists a group GT of order p and a mape:G×G→GT suchthat:
+1. the group actions in G and GT putable;
+are efficiently com- 2. themapeisbilinear,namelyforallg∈Gandα,β∈
+Z
+e(gα,gβ) = e(g,g)αβ 3. e is efficiently computable;
+4. e is non-degenerate, namely there is a g ∈ G such that e(g,g)̸=1
+We will often refer to the bilinear map e as a pairing. To be cryptographically interesting, we will also need the discrete-log problem in G to be hard.
+Implications of the bilinear map.
+We explore a few ba- sic properties of the bilinear map defined over G. First, it
+should be clear that for any g, h ∈ G and x ∈ Z we have e(g, hx) = e(gx, h)
+In other words, one can “move” the exponent x from one side to the other without knowing the value of x. This is used extensively by pairing-based cryptosystems.
+The bilinear map e has a few implications in G:
+• First, the discrete log problem in G is reducible to the discrete-log problem in GT [48]. Indeed, given a discrete-log instance, g, h ∈ G, compute
+19
+gT := e(g,g) , hT := e(g,h) xx
+ Thenh=g ifandonlyifhT =gT.ThepairgT,hT is a discrete-log problem in GT .
+            
+• Second, the decision Diffie-Hellman problem (DDH) in the group G is easy [39]. That is, given (g,gα,h,hβ) ∈ G4, with α,β ∈ Zp, there is an ef- ficient algorithm to test if α = β. Simply observe that
+α = β if and only if e(g,hβ) = e(gα,h)
+The first application of pairings to cryptography is due to Menezes, Okamoto, and Vanstone [48] who used the pairing to attack the discrete-log problem on certain elliptic curves. Joux [38] and Sakai, Ohgishi and Kasahara [53] proposed the first crypto constructions using pairings.
+1.1 Diffie-Hellman problems
+From here on we let G be a bilinear group of prime or- der p. In the late 1970’s Diffie and Hellman showed that interesting cryptosystems can be built if one assumes that the Computational Diffie-Hellman (CDH) problem is hard. TheCDHprobleminGistocomputegxy given(g,gx,gy), where g is uniform in G and x, y are uniform in Zp. We say that the CDH problem in G is hard if no efficient algorithm solves the problem with non-negligible probability.
+A useful variant of the CDH problem, called Bilinear Diffie-Hellman (BDH), is it to compute e(g,h)xy given (h, g, gx, gy), where g, h are uniform in G and x, y are uni- form in Zp.
+Both the CDH and BDH problems appear to be hard in bilinear groups where discrete-log is hard. Both have been used to build cryptosystems in bilinear groups. We note that a non-uniform reduction, due to Maurer [47], reduces CDH in G to discrete-log in G. It is an open problem to construct an analogous reduction from BDH to discrete-log.
+Decision Diffie-Hellman. In the late 1990’s it was shown that interesting cryptosystems can be built if one assumes that the Decision Diffie-Hellman problem (DDH) is hard. We say that the DDH assumption holds in a prime order group G if no efficient algorithm can distinguish the distri- butions
+􏰁g,gx,gy,gxy􏰂 and 􏰁g,gx,gy,gz􏰂
+where g is uniform in G and x,y,z are uniform in Zp. While the DDH assumption appears to hold in a prime order subgroup of a finite field, we noted that the DDH assump- tion is false in a bilinear group [39]. The following two as- sumptions have been proposed as substitutes for the DDH assumption in bilinear groups:
+• Decision BDH assumption [11]: the distributions
+􏰁h,g,gx,gy, e(g,h)xy􏰂 and 􏰁h,g,gx,gy, e(g,h)z􏰂
+are indistinguishable, where g, h are uniform in G and x, y, z are uniform in Zp.
+• Decision Linear assumption [12]: the distributions 􏰁g,h,u,gx,hy, ux+y􏰂 and 􏰁g,h,u,gx,hy, uz􏰂
+are indistinguishable, where g, h, u are uniform in G and x, y, z are uniform in Zp.
+The decision linear assumption, in particular, is a natural substitute for DDH since all group elements live in the group G.
+Both assumptions appear to hold in bilinear groups where discrete-log is hard. We note that the Decision BDH assumption in G implies the DDH assumption in GT . The converse is an important open problem. The same is true for the decision linear assumption.
+2
+2
+0
+0
+2
+The most basic application: digital signatures
+The simplest and most direct application of bilinear groups is the BLS signature scheme [20]. The system uses a hash function H : {0, 1}∗ → G and works as follows:
+• KeyGen: pick a random generator g ∈ G and a ran- dom x ∈ Zp; output the secret key sk := x and public keypk:=(g,gx);
+• Sign(sk , m): output the signature σ := H (m)x ;
+• Verify(pk , m, σ): parse pk as (g, h);
+output accept if (g, h, H(m), σ) is a DDH tuple and output reject otherwise.
+The DDH test during verification amounts to testing if
+e(g, σ) =? e(h, H(m))
+If one models the hash function H as a random oracle, then this signature scheme can be shown to be existentially un- forgeable under a chosen message attack assuming the com- putational Diffie-Hellman problem in G is hard.
+Despite its simplicity, the signature scheme has a number of interesting properties. First, observe that a signature is a single element in G and consequently can be very short. In practice, these signatures are about half the length of a DSS signature with comparable security.
+Second, this signature scheme gives a simple threshold signature system [20, 10]. In a threshold signature sys- tem the signer’s secret key sk is split between multiple par- ties, and a subset of parties is needed to generate a signa- ture. Since BLS uses a group of prime order, both signature generation and private key generation are easy to distribute across multiple parties. For neither RSA signatures nor DSS signatures is it as easy to thresholdize both private key gen- eration and signature generation.
+ 
+Third, and perhaps most interesting, is that BLS sig- natures are aggregatable [16]: a list of n signatures on n distinct messages by n distinct public keys, can be com- pressed (aggregated) into a single short signature. More precisely, let (pk i , sk i ) be BLS public/private key pairs for i = 1,...,n. Let
+(m1,σ1),...,(mn,σn)
+be a list of message/signature pairs where σi is a BLS sig- nature on mi generated using ski, for i = 1,...,n. All n signatures can be aggregated into a single short signature by simply multiplying out all n signatures:
+n
+σ∗:=􏰠σi (1)
+i=1
+This σ∗ is sufficient to convince the verifier that all n mes- sages m1, . . . , mn were properly signed. To verify the ag- gregate signature σ∗ the verifier checks that
+n
+􏰠 e(hi, H(mi)) =? e(g, σ∗) i=1
+Correctness follows by bilinearity since:
+For example, a signature scheme from [11], which signs messages m ∈ Zp is as follows. For elements u, v ∈ G define the hash function:
+Hu,v(m) := umv
+The signature scheme is defined as follows:
+∗ 􏰠n e(g,σ )=
+i=1
+andforavalidsignatureσi: e(g,σi)=e(hi,H(mi)).
+A definition of security for aggregate signatures is given in [16]. To obtain a secure aggregate signature system one must slightly modify the scheme above to always hash the public key pki along with the message mi. More precisely,
+the modified signature on a message m using public key pk and secret key sk = x is
+σ := H(pk,m)x
+Security if this aggregate signature scheme can be shown if H is modeled as a random oracle [16, 8].
+If one is happy with a weaker aggregation property, called sequential aggregation, then there are pairing-based aggregation systems that are secure without random or- acles [44]. Other notions of aggregation were studied in [10, 40].
+2.1 Signatures without random oracles
+Using bilinear groups one can build an efficient signa- ture scheme whose security is based on the standard Com- putational Diffie-Hellman (CDH) assumption, and without relying on random oracles. The best comparable construc- tions without bilinear groups [33, 29] rely on complexity assumptions that appear to be much stronger than CDH.
+e(g,σi)
+•
+•
+•
+KeyGen: pick random α in Zp and random g, h, u, v in G; output
+􏰁 α􏰂
+pk := g,h,u,v, e(g,h) , sk := (pk,α)
+Sign(sk , m): choose random r ∈ Zp and output the signature
+σ:=􏰁gr, hα·Hu,v(m)r􏰂 Verify(pk,m,σ): parse pk as (g,h,u,v,T) and σ
+as (σ1, σ2); output accept if T·e􏰁σ1,Hu,v(m)􏰂=? e(g,σ2)
+and output reject otherwise. Indeed, for a valid sig- nature
+e(g,σ2)=e(g,h)α ·e􏰁gr, Hu,v(m)􏰂
+This signature scheme can be shown to be selectively un- forgeable under a chosen message attack if one assumes that the computational Diffie-Hellman (CDH) problem in G is hard. In other words, an adversary who can forge a signa- ture on a message of his choice can be used to solve CDH in G, as long as the adversary chooses the target message before seeing the public key.
+An impressive result by Waters [56] removes the restric- tion on when the adversary can choose the target message. Waters shows that the signature scheme becomes existen- tially unforgeable under a chosen message attack if one re- places the hash function Hu,v by a different hash function Hu ̄,v defined as follows. Let u ̄ = (u1,...,ul) ∈ Gl and v∈G.Letm=m1...ml ∈{0,1}l.Define
+l
+Hu ̄,v (m) := 􏰠 umi v i
+i=1
+Algorithm KeyGen works as before, except that it replaces the term u in the public key by a random vector u ̄ ∈ Gl. Again, the proof of security depends only on the Computa- tional Diffie-Hellman assumption in G.
+Without bilinear groups it is not known how to construct such efficient signature systems based on the Computational Diffie-Hellman problem, without relying on random ora- cles.
+ 2
+2
+1
+1
+
+3 Public key encryption
+Bilinear groups are very helpful in constructing public- key encryption schemes with properties that are otherwise difficult to achieve. We briefly give a few examples.
+Identity based encryption (IBE). In 1984 Shamir [54] asked for a pubic-key encryption system where the public- key can be a user’s name or email address. In an IBE set- tings there is a central authority, called a Private Key Gener- ator (PKG), who holds a secret master-key. The PKG takes as input a user’s identity (say, an email address) and uses the master-key to generate a private key for the identity. This private-key enables the user to decrypt any message encrypted under the user’s identity as a public-key.
+One of the first applications for bilinear groups is an effi- cient IBE system [14] in the random oracle model. Several pairing-based IBE constructions without random oracles are also known [11, 56, 34]. In contrast, the best IBE construc- tions that do not use bilinear groups [28, 15] require the random oracle model, and are not as practical.
+Many generalizations of IBE have been proposed in re- cent years, including Hierarchical Identity Based Encryp- tion (HIBE) [35, 18], anonymous identity based encryp- tion [13, 1, 23], and Attribute Based Encryption [9]. All of these can be constructed using bilinear groups, while no constructions for HIBE and ABE are known without bilin- ear groups. (Anonymous IBE without bilinear groups, in the random oracle model, was recently constructed in [15, 30].)
+Chosen ciphertext security. Canetti, Halevi, and Katz (CHK) [27] showed that chosen ciphertext secure public- key encryption can be constructed directly from a secure IBE (in fact, selectively secure IBE suffices). Applying this result to the IBE systems mentioned in the previous para- graph gives a simple and efficient chosen ciphertext secure public-key encryption scheme. In fact, there are other ways to construct chosen ciphertext secure systems from bilinear maps [22]. In some constructions [41] the pairing is only needed for the proof of security.
+We note, however, that even the most efficient chosen ciphertext secure constructions from bilinear groups are not as efficient as the best known chosen ciphertext se- cure systems [2] in groups where DDH is hard. However, when it comes to threshold chosen ciphertext encryption, the CHK method in bilinear groups gives the simplest sys- tems [27, 11].
+Forward secure encryption. A forward secure encryp- tion system is a public-key system where the decryptor lo- cally updates his private key every day. As a result, key theft
+enables the attacker to decrypt future ciphertexts, but past ciphertexts remain secure. This problem was open for some time before Canetti, Halevi, and Katz [26] presented an el- egant solution using bilinear groups. Their construction is based on hierarchical identity based encryption system due to Gentry and Silverberg [35].
+Homomorphic encryption. One of the oldest problems in cryptography, open since 1978 [52], is the construction of a semantically secure and doubly homomorphic encryption system E. Let us assume that plaintexts live in a prime field Fp. In a doubly homomorphic system there are efficient algorithms A+ and A∗ that given
+C1 ←R E(pk, m1) and C2 ←R E(pk, m2) as input, do:
+2
+2
+2
+2
+• A+ (C1 , C2 ) generates E(pk, m1 +m2),and
+• A∗ (C1 , C2 ) generates E(pk, m1 ·m2).
+the same the same
+distribution as
+distribution as
+In other words, A+ generates an encryption of m1 + m2 and A∗ generates an encryption of m1 · m2. Prior to bilin- ear groups, one could only construct singly homomorphic systems, namely systems where either A+ exists or A∗ ex- ists, but not both.
+Using bilinear groups it is possible to construct a seman- tically secure system E that is “(1 + ε) homomorphic” [19], namely a system that supports many additions, but only one multiplication. More precisely, there are semantically se- cure systems E and E′ and an algorithm A such that:
+A􏰁E(pk, m1), . . . , E(pk, ml)􏰂 generates the same distribution as
+E′􏰁pk, F(m1,...,ml)􏰂
+as long as F is a polynomial of total degree two, i.e. F is of
+the form:
+F(x1,...,xl)= 􏰟 xi·xj+􏰟xi+c (i,j )∈S2 i∈S1
+“(1 + ε) homomorphic” systems lead to improvements in a Private Information Retrieval protocol due to Kushilevitz and Ostrovsky [42], and are used for constructing mix nets with offline mixing [3].
+Searchable encryption. Imagine one uses an email server that routes incoming emails based on keywords in the subject line. For example, if the subject says “urgent” the server routes the email to the recipient’s cell phone. If
+ 
+the subject says “buy this stock” the server routes the email to the recipient’s spam box. If the user is setup to receive encrypted email, the server can no longer read the subject line and cannot do its job.
+The standard solution is to give the mail server the full decryption key. Clearly this gives the mail server more power than it needs. Ideally, for a word w, the user hold- ing the private-key should be able to generate a token Tw that enables the server to test whether the word w appears in the encrypted subject line, but learn nothing else about the subject line. These tokens let the server do its job with- out learning information it does not need.
+Bilinear groups enable the construction of efficient pub- lic key searchable encryption, either in the random oracle model [13, 1] or in the standard model [23, 34]. Construc- tions not using bilinear groups [15, 30] require the random oracle model and are far less efficient.
+Broadcast encryption. A broadcast encryption sys- tem [32, 51] consists of n users where each user has its own secret key. An encryptor, Alice, creates a ciphertext that can be decrypted by user u only if u belongs to a subset S of users chosen by Alice during encryption. For example, a radio station can encrypt its programming so that only ac- tive subscribers can decrypt.
+We say that the system is fully collusion resistant if no subset of users can decrypt a broadcast that is not intended for any of them. The trivial broadcast encryption system, where one encrypts to each user individually, is fully col- lusion resistant. However, the ciphertext size is O(|S| · λ) where |S| is the number of recipients and λ is a security pa- rameter. Surprisingly, when the set S is small, say less than n/4, nothing better is known that is fully collusion resistant.
+Using bilinear groups one can construct a fully collusion resistant broadcast encryption system [17] with the follow- ing parameters. For a set S let τ(S) be the number of bits needed to describe the set S. Then
+proves non-interactively that z is the NAND of x and y. This is possible thanks to the bilinearity of the pairing.
+Verifiable random function (VRF). A VRF F is a pseudo-random function with an additional property [49]: the secret key holder can convince a third party that the function was evaluated properly. We refer to [49] for the complete definition. The most efficient constructions for VRFs [46, 31] use bilinear groups, and in particular, the fact that DDH is easy in bilinear groups.
+More applications. Bilinear groups have many other ap- plications, including the construction of efficient group sig- natures [12, 25, 24, 5], traitor tracing schemes [21], proxy re-encryption [4], identity based signatures [7], and trust ne- gotiations [43, 6], to name a few.
+ciphertext size secret key size
+= O(τ(S) + λ) = O(λ)
+Bilinear groups are a tremendous tool for constructing public-key systems with new properties. There are many remaining problems that are currently open, but appear to be within reach. We give two examples:
+Hierarchical Identity Based Encryption (HIBE). The security proof for all known constructions for HIBE de- grade exponentially with the depth of the hierarchy. This seems to be an inherent limitation of the current technique used to prove security of HIBE constructions. It is an open problem to construct an HIBE system, based on a falsifiable assumption, where security only degrades polynomially in the hierarchy depth.
+Verifiable Random Functions (VRF). Current efficient constructions for VRFs based on bilinear groups [46, 31] provide a relatively loose reduction to the underlying com- plexity assumption. The question is whether there is an ef- ficient VRF, based on a falsifiable assumption, with a tight security reduction to the underlying assumption.
+A challenging problem. While the previous two prob- lems may be resolved in the coming years, the next ques- tion is likely to require brand new tools. Given the success of bilinear groups it is natural to ask whether cryptographic n-linear groups exist for n > 2. More precisely, are there prime order groups G, GT such that:
+1. discrete log is hard in G and GT , and
+2. for n > 2 there is an efficiently computable, non-
+degenerate, n-linear map
+e : Gn → G
+Hence, for small S the ciphertext is shorter than existing collusion resistant broadcast systems. This system, how- ever, needs a system parameter of size O(n · λ). The system parameter is fixed once and for all and can be used by mul- tiple broadcast systems (e.g. multiple radio stations can all use the same parameter).
+Non-interactive zero-knowledge (NIZK). A beautiful recent result of Groth, Ostrovsky, and Sahai [37, 36] uses bilinear groups to construct a multi-theorem NIZK system with a short common reference string. At the heart of these NIZK proofs is a proof that a NAND gate is evaluated prop- erly. That is, given commitments to x, y, z ∈ {0, 1} one
+4
+Open problems
+ 
+
+n-linear groups will lead to cryptosystems with stronger homomorphic properties, supporting many additions and (n − 1) multiplications. They will also result in efficient protocols for broadcast encryption and multi-party key ex- change.
+5 Summary
+This note provides a brief summary of how a new alge- braic tool, bilinear groups, is transforming public-key cryp- tography. For the examples mentioned, the best solutions without bilinear groups either do not exist or are far less efficient. Many of the systems discussed in this note were implemented by Lynn [45] in a software library freely avail- able under the GPL.

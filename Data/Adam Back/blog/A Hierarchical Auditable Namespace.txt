@@ -1,0 +1,32 @@
+A Hierarchical Auditable Namespace
+I proposed on the crypto lists a few years back an idea about namespaces to create a censor resistant namespace.
+
+A namespace is a mapping from a human readable name into some bit string (eg. ipv4 IP address, content hash, location handle, etc).
+
+The idea is to try to create a global namespace collaboratively maintained by servers which audit each others behavior and compensate for rogue behavior in collaboration with client name server protocols.
+
+The aim is to create a namespace where Names are strictly first-come first served and persistent. Only the author who registers a key at the time he reserves the name is able to change the mapping. Local censorship and revisionism is allowed, but only in local views of the root namespace. Users browsers may be configured (or even come pre-configured) to censor local names in the domain they are distributed in. (Eg. a .cn filter, or a .us filter).
+
+But anyone should be able to get to the root unmodified namespace, either by disabling the filters, or by using some syntax which indicates that the name is in the root immutable namespace.
+
+There are two protocols involved
+Public Auditability - Use Merkle Authentication Trees [*] to prevent revisionism on the part of namespace servers. Namespace servers publish master hashes, users and namespace servers audit each others adherence to the global immutable root policy.
+Revision Recovery - The client software should include protocols to accept notices from other namespace servers that detect a rogue namespace server. rogue namespace servers responses pass through the revision recovery protocol which works out if the repsonse is from a modified part of the Authentication Tree, and if so recovers the necessary original values from other servers. Servers cache the original values of modified sections of rogue servers Authentication Trees.
+The combination of protocols in clients and servers ensures that users can choose which filters they want to subscribe to.
+
+Companies may be satisfied with the subset of names that survive the policies of a monopoly unaudited root server.
+
+People who want more robust names can use the root namespace explicitly.
+
+For efficiency you probably want namespace servers to do the auditing. You don't want to audit every lookup back to the root even thought it is relatively efficient. Users can of course independently audit also.
+
+Denial of Service
+The system proposed is vulnerable to Denial of Service. There is no barrier to hostile users creating names as fast as their network connections allow.
+
+A robust solution would be payer anonymous ecash, but then we have boot strap problems, as there isn't one yet, and global e-cash systems robust against being themselves censored are probably an even harder problem.
+
+Perhaps you could use hashcash to throttle name creation floods. Name creations are infrequent enough that users could put up with a reasonably expensive computation. Users of names could also submit hashcash on the names they use so that popular names get higher valued hashcash.
+
+Also you could probably retain auditability if you allowed policies of dropping the lowest valued names in event of a flood.
+
+[*] A Merkle Authentication Tree is basically a tree of hashes to allow the efficient verification of a particular leaf in the tree with log(n) queries. Imagine a binary tree representing a namespace with names as the leaf nodes. The parent of a leaf node is the hash of the pair of names below it. The parent of that node with it's neighbor is the hash of it and the neighbor hash, and so on up to the root which is the master hash of all the hash of hashes of names down to the leaves. Fortunately Merkle's patent has expired.

@@ -1,0 +1,296 @@
+Double Trouble Numbers
+Friday 28th December 2018
+A few years ago I came across a programming problem concerning numbers that were referred to as Double Trouble (DT) numbers, and I will borrow the term here. I looked into them with a friend, Colm Bhandal, because we found them interesting. I will share some of their properties in this post.
+
+First, what is a DT number? A DT number with respect to some base 
+b
+ is a positive integer 
+n
+ such that when the digits (in base 
+b
+) are right rotated one position, the resulting number is 
+2
+n
+ i.e. double the original number. Some of the questions we will answer are: are there an infinite number of DT numbers for a given base and what form do they take? We will first prove a result that will help answer these questions, namely we will show that for every base 
+b
+≥
+2
+, there exists a DT number with least significant digit 
+d
+ for all 
+d
+∈
+{
+1
+,
+…
+,
+b
+−
+1
+}
+. The proof proceeds as follows.
+
+Let 
+d
+k
+−
+1
+b
+k
+−
+1
++
+d
+k
+−
+2
+b
+k
+−
+2
++
+⋯
++
+d
+0
+ be a 
+k
+-digit DT number. Then by definition of a DT number, we have
+d
+0
+b
+k
+−
+1
++
+d
+k
+−
+1
+b
+k
+−
+2
++
+⋯
++
+d
+1
+=
+2
+⋅
+(
+d
+k
+−
+1
+b
+k
+−
+1
++
+d
+k
+−
+2
+b
+k
+−
+2
++
+⋯
++
+d
+0
+)
+This implies that 
+d
+1
+=
+2
+d
+0
+ and 
+d
+2
+=
+2
+d
+1
++
+c
+ where 
+c
+∈
+{
+0
+,
+1
+}
+ is the carry of 
+2
+⋅
+d
+0
+ i.e. 
+c
+=
+⌊
+2
+d
+0
+/
+b
+⌋
+. More generally, we have 
+d
+i
++
+1
+=
+2
+d
+i
++
+c
+i
+ and 
+c
+i
++
+1
+=
+⌊
+2
+d
+i
+/
+b
+⌋
+ with 
+c
+0
+=
+0
+ and 
+d
+0
+ being the least significant digit. We will view the pair 
+(
+d
+i
+,
+c
+i
+)
+ as a state. The state transition function 
+δ
+:
+Z
+b
+×
+{
+0
+,
+1
+}
+→
+Z
+b
+×
+{
+0
+,
+1
+}
+ is defined as above; that is
+δ
+:
+(
+d
+i
+,
+c
+i
+)
+↦
+(
+2
+d
+i
++
+c
+i
+,
+⌊
+2
+d
+i
+/
+b
+⌋
+)
+The starting state for a DT number corresponding to its least significant digit is 
+(
+d
+0
+,
+0
+)
+ where 
+d
+0
+∈
+Z
+b
+ is the least significant digit. A DT number is generated when the state returns to 
+(
+d
+0
+,
+0
+)
+ and the digits of the DT number are the 
+d
+i
+ components of the intermediate states in addition to the starting state. The state will always return to the starting state i.e. it will not get stuck in cycles that exclude the starting state. To see this, observe that every state has a unique predecessor state, and therefore, necessarily, the state must return to the starting state. Hence, starting with any least significant digit, we can generate a finite length DT number in any given base. This proves the result.
+
+The maximum length of what we call an elementary DT number is 
+2
+(
+b
+−
+1
+)
+ digits since there are a toral of 
+2
+b
+ possible states and the states 
+(
+0
+,
+0
+)
+ and 
+(
+b
+−
+1
+,
+1
+)
+ cannot be encountered because a DT number is positive and the latter state transitions to itself. By elementary, we mean that the DT number is the minimum length DT number with a chosen least significant digit. The minimum length of a DT number is 2 digits. Now given a DT number with 
+k
+ digits, concatenating the number (joining its sequence of digits) with itself yields another (non-elementary) DT number with 
+2
+k
+ digits. Indeed repeating the process yields DT numbers whose length are arbitrary multiples of 
+k
+. And this tells us, there are an infinite number of DT numbers for any chosen base 
+b
+≥
+2
+.
+
+An algorithm in Python to find the minimum (by value) DT number for a chosen base is shown below.
